@@ -10,7 +10,8 @@
  */
 
 import { db, isOnlineMode } from "./firebase";
-import { ref, set, onValue, off } from "firebase/database";
+import { ref, set, onValue, off, get as fbGet } from "firebase/database";
+import { generateRoomCode } from "../data/teams";
 
 // ─── Serialise / deserialise ──────────────────────────────────────────────────
 
@@ -67,6 +68,37 @@ export async function pushRoom(roomCode, state) {
   await set(r, serialiseRoom(state)).catch((e) =>
     console.warn("[roomSync] write failed:", e.message)
   );
+}
+
+// ─── One-time reads ───────────────────────────────────────────────────────────
+
+/**
+ * One-time check: does a room with this code exist in Firebase?
+ * Returns false in local mode (no Firebase to check).
+ */
+export async function roomExists(roomCode) {
+  if (!isOnlineMode || !db) return false;
+  try {
+    const snap = await fbGet(ref(db, `rooms/${roomCode}`));
+    return snap.exists();
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Generate a 4-char code guaranteed not to clash with any live Firebase room.
+ * Falls back to a plain random code in local mode (no Firebase).
+ */
+export async function generateUniqueRoomCode() {
+  if (!isOnlineMode || !db) return generateRoomCode();
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const code = generateRoomCode();
+    const taken = await roomExists(code);
+    if (!taken) return code;
+  }
+  // After 10 attempts just use a fresh code — collision astronomically unlikely
+  return generateRoomCode();
 }
 
 /** Convenience: only call pushRoom when Firebase is active. */

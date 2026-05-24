@@ -29,6 +29,7 @@ export function WinnerPage() {
   const teams        = useGameStore((s) => s.teams);
   const boardLength  = useGameStore((s) => s.boardLength);
   const resetGame    = useGameStore((s) => s.resetGame);
+  const playAgain    = useGameStore((s) => s.playAgain);
   const { clearDevice } = useDevice();
 
   const winner      = teams.find((t) => t.id === winnerTeamId);
@@ -36,7 +37,10 @@ export function WinnerPage() {
 
   useEffect(() => { launch(); }, []);
 
-  const handleReset = () => { resetGame(); clearDevice(); };
+  // Play Again: keep same code + teams, reset positions → back to Team Setup
+  const handlePlayAgain = () => { playAgain(); };
+  // Menu: full reset → back to landing
+  const handleMenu = () => { resetGame(); clearDevice(); };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 overflow-hidden">
@@ -134,10 +138,10 @@ export function WinnerPage() {
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.2 }}
           className="flex gap-3 mt-7"
         >
-          <Button size="lg" variant="primary" className="flex-1" onClick={handleReset} icon={RotateCcw}>
+          <Button size="lg" variant="primary" className="flex-1" onClick={handlePlayAgain} icon={RotateCcw}>
             Play Again
           </Button>
-          <Button size="lg" variant="secondary" className="flex-1" onClick={handleReset} icon={Home}>
+          <Button size="lg" variant="secondary" className="flex-1" onClick={handleMenu} icon={Home}>
             Menu
           </Button>
         </motion.div>

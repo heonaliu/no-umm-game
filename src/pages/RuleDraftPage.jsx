@@ -6,7 +6,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Eye, EyeOff, ChevronRight, Check, Layers } from "lucide-react";
+import { Eye, ChevronRight, Check, Layers, Copy } from "lucide-react";
 import { useGameStore } from "../store/gameStore";
 import { useDevice } from "../context/DeviceContext";
 import { RuleCard } from "../components/game/RuleCard";
@@ -15,9 +15,17 @@ import { isOnlineMode } from "../lib/firebase";
 
 export function RuleDraftPage() {
   const teams           = useGameStore((s) => s.teams);
+  const roomCode        = useGameStore((s) => s.roomCode);
   const toggleDraftCard = useGameStore((s) => s.toggleDraftCard);
   const finalizeDraft   = useGameStore((s) => s.finalizeDraft);
   const { myTeamIndex, isHost } = useDevice();
+
+  const [copied, setCopied] = useState(false);
+  const copyCode = () => {
+    navigator.clipboard?.writeText(roomCode ?? "");
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1800);
+  };
 
   // Local mode: cycle through each team; online mode: only show your own team
   const [localIdx, setLocalIdx] = useState(0);
@@ -47,8 +55,22 @@ export function RuleDraftPage() {
           initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }}
           className="text-center mb-7"
         >
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-sky-100 mb-4">
-            <Layers size={26} className="text-sky-600" />
+          {/* Room code — tap to copy, helpful for late joiners */}
+          {roomCode && (
+            <button
+              onClick={copyCode}
+              className="inline-flex items-center gap-2.5 rounded-2xl bg-white border border-sky-200 px-4 py-2 mb-4 shadow-sm hover:bg-sky-50 transition-colors"
+            >
+              <span className="text-sky-400 text-xs font-bold uppercase tracking-widest">Room Code</span>
+              <span className="font-display text-xl text-sky-900 tracking-[0.2em]">{roomCode}</span>
+              {copied
+                ? <Check size={14} className="text-emerald-500" />
+                : <Copy size={14} className="text-sky-300" />}
+            </button>
+          )}
+
+          <div className="flex m-4 items-center justify-center w-14 h-14 rounded-2xl bg-sky-100 mx-auto mb-4">
+            <Layers size={26} className="text-sky-500" />
           </div>
           <h1 className="font-display text-4xl text-sky-950">Rule Draft</h1>
           <p className="text-sky-400 text-sm mt-1">

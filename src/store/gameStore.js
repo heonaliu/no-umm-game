@@ -9,10 +9,10 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { generateDefaultTeams, generateRoomCode } from "../data/teams";
+import { generateDefaultTeams } from "../data/teams";
 import { drawRules } from "../data/rules";
 import { drawWordPair } from "../data/words";
-import { pushRoom, isOnlineMode } from "../lib/roomSync";
+import { pushRoom, isOnlineMode, generateUniqueRoomCode } from "../lib/roomSync";
 import { crossedYellow } from "./boardHelpers";
 
 export { isYellowSpace, isDangerZone, DANGER_ZONE_SIZE, YELLOW_INTERVAL } from "./boardHelpers";
@@ -125,8 +125,8 @@ export const useGameStore = create(
 
         // ── Lobby ──────────────────────────────────────────────────────────
 
-        createRoom: ({ numTeams, boardLength, timerSeconds, autoDing = false }) => {
-          const roomCode = generateRoomCode();
+        createRoom: async ({ numTeams, boardLength, timerSeconds, autoDing = false }) => {
+          const roomCode = await generateUniqueRoomCode();
           const teams    = generateDefaultTeams(numTeams);
           set({
             roomCode, numTeams, boardLength, timerSeconds, autoDing,
@@ -317,6 +317,38 @@ export const useGameStore = create(
         },
 
         resetGame: () => set({ ...initial }),
+
+        /**
+         * Play Again — keeps the same room code, board settings, and team
+         * names/colours/pawns but resets all positions, rules, and turn state.
+         * Goes back to TEAM_SETUP so the host can start a fresh draft.
+         */
+        playAgain: () => {
+          const { roomCode, numTeams, boardLength, timerSeconds, autoDing, teams } = get();
+          const freshTeams = teams.map((t) => ({
+            id: t.id,
+            name: t.name,
+            color: t.color,
+            pawn: t.pawn,
+            position: 0,
+            score: 0,
+            ruleCards: [],
+            activeRules: [],
+            pendingRules: [],
+            selectedDraftCards: [],
+          }));
+          set({
+            ...initial,
+            roomCode,
+            numTeams,
+            boardLength,
+            timerSeconds,
+            autoDing,
+            teams: freshTeams,
+            phase: GAME_PHASES.TEAM_SETUP,
+          });
+          _publish();
+        },
       };
     },
     {

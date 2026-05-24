@@ -10,12 +10,13 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Gamepad2, KeyRound, Users, ArrowLeft, Hash, Clock, ChevronRight, Wifi, WifiOff, Zap, Bell } from "lucide-react";
+import { Gamepad2, KeyRound, Users, ArrowLeft, Hash, Clock, ChevronRight, Wifi, WifiOff, Zap, Bell, Loader2 } from "lucide-react";
 import { useGameStore, GAME_PHASES, DEFAULT_BOARD_LENGTH, DEFAULT_TIMER_SECONDS } from "../store/gameStore";
 import { useDevice } from "../context/DeviceContext";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 import { isOnlineMode } from "../lib/firebase";
+import { roomExists } from "../lib/roomSync";
 
 const BOARD_PRESETS = [
   { label: "Short",   value: 20, est: "~20 min" },
@@ -60,24 +61,39 @@ export function LobbyPage() {
   const [autoDing, setAutoDing]     = useState(false);
   const [joinCode, setJoinCode]     = useState("");
   const [joinError, setJoinError]   = useState("");
+  const [isCreating, setIsCreating] = useState(false);
+  const [isJoining, setIsJoining]   = useState(false);
 
   const createRoom = useGameStore((s) => s.createRoom);
   const joinRoom   = useGameStore((s) => s.joinRoom);
   const setPhase   = useGameStore((s) => s.setPhase);
   const { claimTeam } = useDevice();
 
-  const handleCreate = () => {
-    createRoom({ numTeams, boardLength, timerSeconds, autoDing });
+  const handleCreate = async () => {
+    setIsCreating(true);
+    await createRoom({ numTeams, boardLength, timerSeconds, autoDing });
     claimTeam(0, true); // host = team 0
+    // setIsCreating(false) not needed — component unmounts on phase change
   };
 
-  const handleJoin = () => {
+  const handleJoin = async () => {
     const code = joinCode.trim().toUpperCase();
     if (code.length !== 4) {
       setJoinError("Room codes are exactly 4 characters (e.g. X7KP)");
       return;
     }
     setJoinError("");
+
+    if (isOnlineMode) {
+      setIsJoining(true);
+      const found = await roomExists(code);
+      setIsJoining(false);
+      if (!found) {
+        setJoinError("Room not found. Double-check the code and try again.");
+        return;
+      }
+    }
+
     joinRoom(code);
     // Team selection happens on the TeamSetupPage after state loads from Firebase
   };
@@ -200,8 +216,8 @@ export function LobbyPage() {
                   <div><p className="font-display text-2xl text-sky-900">{timerSeconds}s</p><p>Timer</p></div>
                 </div>
 
-                <Button size="lg" variant="primary" className="w-full" onClick={handleCreate} icon={ChevronRight}>
-                  Create Room
+                <Button size="lg" variant="primary" className="w-full" onClick={handleCreate} disabled={isCreating} icon={isCreating ? Loader2 : ChevronRight}>
+                  {isCreating ? "Creating…" : "Create Room"}
                 </Button>
               </motion.div>
             ) : (
@@ -228,8 +244,8 @@ export function LobbyPage() {
                   maxLength={4}
                 />
 
-                <Button size="lg" variant="primary" className="w-full" onClick={handleJoin} icon={KeyRound}>
-                  Join Room
+                <Button size="lg" variant="primary" className="w-full" onClick={handleJoin} disabled={isJoining} icon={isJoining ? Loader2 : KeyRound}>
+                  {isJoining ? "Checking code…" : "Join Room"}
                 </Button>
 
                 <p className="text-center text-sky-400 text-sm">
