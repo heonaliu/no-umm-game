@@ -19,11 +19,12 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle, Bell, Play, Timer, ChevronRight, Flame, Mic } from "lucide-react";
+import { CheckCircle, Bell, Play, Timer, ChevronRight, Flame, Mic, Flag } from "lucide-react";
 import { useGameStore, TURN_PHASES, isDangerZone } from "../store/gameStore";
 import { useDevice } from "../context/DeviceContext";
 import { burstConfetti } from "../hooks/useConfetti";
 import { isOnlineMode } from "../lib/firebase";
+import { Modal } from "../components/ui/Modal";
 
 import { GameBoard }          from "../components/board/GameBoard";
 import { CountdownTimer }     from "../components/game/CountdownTimer";
@@ -37,7 +38,7 @@ import { Button }             from "../components/ui/Button";
 
 // ─── Non-active team view ─────────────────────────────────────────────────────
 
-function ListeningView() {
+function ListeningView({ onRequestEnd }) {
   const teams            = useGameStore((s) => s.teams);
   const currentTeamIndex = useGameStore((s) => s.currentTeamIndex);
   const turnPhase        = useGameStore((s) => s.turnPhase);
@@ -122,13 +123,23 @@ function ListeningView() {
         <TeamProgressBar />
         <ActiveRulesPanel />
       </div>
+
+      {/* End Game */}
+      <div className="pt-2 flex justify-center">
+        <button
+          onClick={onRequestEnd}
+          className="text-xs text-sky-300 hover:text-red-400 transition-colors flex items-center gap-1.5 py-2 px-3 rounded-xl hover:bg-red-50 cursor-pointer"
+        >
+          <Flag size={13} /> End Game
+        </button>
+      </div>
     </div>
   );
 }
 
 // ─── Active team's view ───────────────────────────────────────────────────────
 
-function ActiveView() {
+function ActiveView({ onRequestEnd }) {
   const teams            = useGameStore((s) => s.teams);
   const currentTeamIndex = useGameStore((s) => s.currentTeamIndex);
   const turnPhase        = useGameStore((s) => s.turnPhase);
@@ -292,6 +303,16 @@ function ActiveView() {
               </motion.div>
             )}
           </AnimatePresence>
+
+          {/* End Game */}
+          <div className="pt-2 flex justify-center">
+            <button
+              onClick={onRequestEnd}
+              className="text-xs text-sky-300 hover:text-red-400 transition-colors flex items-center gap-1.5 py-2 px-3 rounded-xl hover:bg-red-50 cursor-pointer"
+            >
+              <Flag size={13} /> End Game
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -303,12 +324,22 @@ function ActiveView() {
 export function GameplayPage() {
   const teams            = useGameStore((s) => s.teams);
   const currentTeamIndex = useGameStore((s) => s.currentTeamIndex);
-  const { myTeamIndex }  = useDevice();
+  const goToLanding      = useGameStore((s) => s.goToLanding);
+  const { myTeamIndex, clearDevice } = useDevice();
 
   // Rule reveal tracking
   const [revealRule, setRevealRule] = useState(null);
   const [revealTeam, setRevealTeam] = useState(null);
   const prevRulesRef = useRef([]);
+
+  // End-game confirmation
+  const [showEndConfirm, setShowEndConfirm] = useState(false);
+
+  const handleEndGame = () => {
+    goToLanding();
+    clearDevice();
+    setShowEndConfirm(false);
+  };
 
   useEffect(() => {
     teams.forEach((team) => {
@@ -331,7 +362,42 @@ export function GameplayPage() {
   return (
     <>
       <DingSoundListener />
-      {isMyTurn ? <ActiveView /> : <ListeningView />}
+      {isMyTurn
+        ? <ActiveView   onRequestEnd={() => setShowEndConfirm(true)} />
+        : <ListeningView onRequestEnd={() => setShowEndConfirm(true)} />
+      }
+
+      {/* End-game confirmation modal */}
+      <Modal
+        isOpen={showEndConfirm}
+        onClose={() => setShowEndConfirm(false)}
+        title="End the game?"
+      >
+        <p className="text-white/70 text-sm mb-6">
+          This will discard all current progress and return everyone to the main menu.
+          {isOnlineMode && " All players in the room will be sent back."}
+        </p>
+        <div className="flex gap-3">
+          <Button
+            variant="danger"
+            size="lg"
+            className="flex-1"
+            onClick={handleEndGame}
+            icon={Flag}
+          >
+            End Game
+          </Button>
+          <Button
+            variant="secondary"
+            size="lg"
+            className="flex-1"
+            onClick={() => setShowEndConfirm(false)}
+          >
+            Keep Playing
+          </Button>
+        </div>
+      </Modal>
+
       <DingReviewModal />
       <RuleRevealModal
         rule={revealRule}

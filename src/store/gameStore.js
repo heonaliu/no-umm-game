@@ -123,7 +123,17 @@ export const useGameStore = create(
         // ── Navigation ─────────────────────────────────────────────────────
 
         setPhase: (phase) => { set({ phase }); _publish(); },
-        goToLanding: () => set({ ...initial }),
+
+        goToLanding: () => {
+          // Capture roomCode before wiping state so we can notify other devices
+          const { roomCode } = get();
+          if (roomCode && isOnlineMode) {
+            const syncSlice = {};
+            for (const k of SYNC_FIELDS) syncSlice[k] = initial[k];
+            pushRoom(roomCode, syncSlice);
+          }
+          set({ ...initial });
+        },
 
         // ── Lobby ──────────────────────────────────────────────────────────
 
