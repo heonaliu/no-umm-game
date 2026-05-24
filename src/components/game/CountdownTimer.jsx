@@ -1,12 +1,24 @@
+/**
+ * CountdownTimer — circular countdown ring.
+ *
+ * By default reads live values from the team-game store via useGameTimer.
+ * Pass `remaining` and `timerSeconds` props to drive it from an external source
+ * (e.g. duel mode — avoids coupling the component to a specific store).
+ */
+
 import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { useGameTimer } from "../../hooks/useGameTimer";
 import { useGameStore } from "../../store/gameStore";
 import clsx from "clsx";
 
-export function CountdownTimer({ large = false }) {
-  const remaining    = useGameTimer();
-  const timerSeconds = useGameStore((s) => s.timerSeconds);
+export function CountdownTimer({ large = false, remaining: propRemaining, timerSeconds: propTimerSeconds }) {
+  const defaultRemaining    = useGameTimer();
+  const defaultTimerSeconds = useGameStore((s) => s.timerSeconds);
+
+  // External values take precedence (duel mode); fall back to team-game store
+  const remaining    = propRemaining    ?? defaultRemaining;
+  const timerSeconds = propTimerSeconds ?? defaultTimerSeconds;
 
   const progress  = timerSeconds > 0 ? remaining / timerSeconds : 0;
   const isUrgent  = progress <= 0.25;
@@ -19,9 +31,9 @@ export function CountdownTimer({ large = false }) {
   const sw   = large ? 10 : 7;
 
   const strokeColor = useMemo(() => {
-    if (progress > 0.5)  return "#0ea5e9"; // sky-500
-    if (progress > 0.25) return "#d97706"; // amber-600
-    return "#dc2626";                       // red-600
+    if (progress > 0.5)  return "#0ea5e9";
+    if (progress > 0.25) return "#d97706";
+    return "#dc2626";
   }, [progress]);
 
   return (

@@ -24,7 +24,6 @@ import { useGameStore, TURN_PHASES, isDangerZone } from "../store/gameStore";
 import { useDevice } from "../context/DeviceContext";
 import { burstConfetti } from "../hooks/useConfetti";
 import { isOnlineMode } from "../lib/firebase";
-import { Modal } from "../components/ui/Modal";
 
 import { GameBoard }          from "../components/board/GameBoard";
 import { CountdownTimer }     from "../components/game/CountdownTimer";
@@ -367,36 +366,52 @@ export function GameplayPage() {
         : <ListeningView onRequestEnd={() => setShowEndConfirm(true)} />
       }
 
-      {/* End-game confirmation modal */}
-      <Modal
-        isOpen={showEndConfirm}
-        onClose={() => setShowEndConfirm(false)}
-        title="End the game?"
-      >
-        <p className="text-white/70 text-sm mb-6">
-          This will discard all current progress and return everyone to the main menu.
-          {isOnlineMode && " All players in the room will be sent back."}
-        </p>
-        <div className="flex gap-3">
-          <Button
-            variant="danger"
-            size="lg"
-            className="flex-1"
-            onClick={handleEndGame}
-            icon={Flag}
-          >
-            End Game
-          </Button>
-          <Button
-            variant="secondary"
-            size="lg"
-            className="flex-1"
-            onClick={() => setShowEndConfirm(false)}
-          >
-            Keep Playing
-          </Button>
-        </div>
-      </Modal>
+      {/* End-game confirmation modal — matches DingReviewModal / RuleDraftPage cancel style */}
+      <AnimatePresence>
+        {showEndConfirm && (
+          <>
+            <motion.div
+              key="end-bd"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-sky-950/40 backdrop-blur-sm z-50"
+              onClick={() => setShowEndConfirm(false)}
+            />
+            <motion.div
+              key="end-panel"
+              initial={{ opacity: 0, scale: 0.85, y: 32 }}
+              animate={{ opacity: 1, scale: 1,    y: 0  }}
+              exit={{   opacity: 0, scale: 0.85,   y: 32 }}
+              transition={{ type: "spring", stiffness: 400, damping: 26 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-6 pointer-events-none"
+            >
+              <div className="pointer-events-auto w-full max-w-sm rounded-3xl bg-white border-2 border-red-200 shadow-2xl shadow-red-50 p-7 text-center">
+                <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-red-100 mb-4">
+                  <Flag size={28} className="text-red-500" />
+                </div>
+                <h2 className="font-display text-2xl text-sky-950 mb-2">End the game?</h2>
+                <p className="text-sky-500 text-sm mb-6">
+                  This will discard all progress and return everyone to the main menu.
+                  {isOnlineMode && " All players in the room will be sent back."}
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowEndConfirm(false)}
+                    className="flex-1 py-3 rounded-2xl border-2 border-sky-200 text-sky-600 font-bold text-sm hover:bg-sky-50 transition-colors cursor-pointer"
+                  >
+                    Keep Playing
+                  </button>
+                  <button
+                    onClick={handleEndGame}
+                    className="flex-1 py-3 rounded-2xl bg-red-500 hover:bg-red-600 text-white font-bold text-sm transition-colors cursor-pointer"
+                  >
+                    End Game
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       <DingReviewModal />
       <RuleRevealModal

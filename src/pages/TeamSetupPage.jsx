@@ -10,8 +10,9 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import { Pencil, Copy, Check, ArrowLeft, ChevronRight, Lock, Users } from "lucide-react";
-import { useGameStore, GAME_PHASES } from "../store/gameStore";
+import { useGameStore } from "../store/gameStore";
 import { useDevice } from "../context/DeviceContext";
 import { TEAM_COLORS, TEAM_PAWNS } from "../data/teams";
 import { Button } from "../components/ui/Button";
@@ -111,12 +112,12 @@ export function TeamSetupPage() {
   const numTeams        = useGameStore((s) => s.numTeams);
   const roomCode        = useGameStore((s) => s.roomCode);
   const teamClaims      = useGameStore((s) => s.teamClaims ?? {});
-  const setPhase        = useGameStore((s) => s.setPhase);
   const dealRuleCards   = useGameStore((s) => s.dealRuleCards);
   const claimTeamSlot   = useGameStore((s) => s.claimTeamSlot);
   const releaseTeamSlot = useGameStore((s) => s.releaseTeamSlot);
 
   const { deviceId, myTeamIndex, isHost, claimTeam } = useDevice();
+  const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
 
   // How many slots are claimed (in online mode every slot must have a device)
@@ -156,7 +157,7 @@ export function TeamSetupPage() {
     <div className="min-h-screen p-4 pb-28">
       <div className="max-w-2xl mx-auto">
         <button
-          onClick={() => setPhase(GAME_PHASES.LOBBY)}
+          onClick={() => navigate("/team")}
           className="flex items-center gap-1.5 text-sky-400 hover:text-sky-600 text-sm mt-6 mb-4 transition-colors"
         >
           <ArrowLeft size={16} /> Back

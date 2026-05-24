@@ -1,10 +1,13 @@
 /**
- * LandingPage — home screen with sea-blue party aesthetic.
+ * LandingPage — home screen with mode selection.
+ *
+ * Mode A: Team Mode  → /team  (2–6 teams, full rule-draft experience)
+ * Mode B: Duel Mode  → /duel  (1v1 head-to-head, fast-paced)
  */
 
 import { motion } from "framer-motion";
-import { Bell, Gamepad2, Users, Star, Flame, ChevronRight } from "lucide-react";
-import { useGameStore, GAME_PHASES } from "../store/gameStore";
+import { useNavigate } from "react-router-dom";
+import { Bell, Users, Swords, Star, Flame, ChevronRight } from "lucide-react";
 import { Button } from "../components/ui/Button";
 import { isOnlineMode } from "../lib/firebase";
 
@@ -27,7 +30,7 @@ function FloatBlob({ size, color, style }) {
 }
 
 export function LandingPage() {
-  const setPhase = useGameStore((s) => s.setPhase);
+  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen relative flex flex-col items-center justify-center overflow-hidden px-4 py-12">
@@ -64,34 +67,53 @@ export function LandingPage() {
             You Can't Say <span className="text-sky-600">"Umm!"</span>
           </h1>
           <p className="text-sky-500 text-xl mb-1">filler-word party game</p>
-          <p className="text-sky-400 text-sm">2–6 teams · In-person play · 45 sec turns</p>
         </motion.div>
 
-        {/* Tagline card */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.3, type: "spring" }}
-          className="mt-8 rounded-3xl bg-white/80 border border-sky-100 shadow-sm p-6 text-sky-700 text-base leading-relaxed"
-        >
-          Describe word combinations to your team…{" "}
-          <strong className="text-sky-900">without saying um, uh, or any filler sounds.</strong>
-          {" "}Other teams listen — and they've got the{" "}
-          <strong className="text-red-600">DING button.</strong>
-          {" "}Each team plays from their own phone or laptop.
-        </motion.div>
-
-        {/* CTA buttons */}
+        {/* Mode selection */}
         <motion.div
           initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.45 }}
-          className="flex flex-col sm:flex-row gap-3 mt-7 justify-center"
+          transition={{ delay: 0.3 }}
+          className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4"
         >
-          <Button size="xl" variant="primary" onClick={() => setPhase(GAME_PHASES.LOBBY)} icon={Gamepad2} className="flex-1 sm:flex-none">
-            Create Game
-          </Button>
-          <Button size="xl" variant="secondary" onClick={() => setPhase(GAME_PHASES.LOBBY)} icon={ChevronRight} className="flex-1 sm:flex-none">
-            Join with Code
-          </Button>
+          {/* Team Mode */}
+          <motion.button
+            onClick={() => navigate("/team")}
+            whileHover={{ scale: 1.02, y: -2 }}
+            whileTap={{ scale: 0.97 }}
+            transition={{ type: "spring", stiffness: 380, damping: 18 }}
+            className="group rounded-3xl bg-white border-2 border-sky-100 hover:border-sky-300 p-6 text-left shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+          >
+            <div className="w-12 h-12 rounded-2xl bg-sky-600 flex items-center justify-center mb-4 shadow-sm shadow-sky-200 group-hover:scale-110 transition-transform">
+              <Users size={24} className="text-white" />
+            </div>
+            <h2 className="font-display text-2xl text-sky-950 mb-1">Team Mode</h2>
+            <p className="text-sky-400 text-sm leading-snug mb-3">
+              2–6 teams · Rule drafting · Each team uses their own device
+            </p>
+            <div className="flex items-center gap-1 text-sky-600 text-sm font-bold">
+              Play <ChevronRight size={16} />
+            </div>
+          </motion.button>
+
+          {/* Duel Mode */}
+          <motion.button
+            onClick={() => navigate("/duel")}
+            whileHover={{ scale: 1.02, y: -2 }}
+            whileTap={{ scale: 0.97 }}
+            transition={{ type: "spring", stiffness: 380, damping: 18 }}
+            className="group rounded-3xl bg-gradient-to-br from-violet-50 to-sky-50 border-2 border-violet-100 hover:border-violet-300 p-6 text-left shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+          >
+            <div className="w-12 h-12 rounded-2xl bg-violet-600 flex items-center justify-center mb-4 shadow-sm shadow-violet-200 group-hover:scale-110 transition-transform">
+              <Swords size={24} className="text-white" />
+            </div>
+            <h2 className="font-display text-2xl text-sky-950 mb-1">Duel Mode</h2>
+            <p className="text-sky-400 text-sm leading-snug mb-3">
+              1 vs 1 · Fast-paced · Head-to-head with skip limits
+            </p>
+            <div className="flex items-center gap-1 text-violet-600 text-sm font-bold">
+              Duel <ChevronRight size={16} />
+            </div>
+          </motion.button>
         </motion.div>
 
         {!isOnlineMode && (

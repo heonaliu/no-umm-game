@@ -10,8 +10,9 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import { Gamepad2, KeyRound, Users, ArrowLeft, Hash, Clock, ChevronRight, Wifi, WifiOff, Zap, Bell, Loader2 } from "lucide-react";
-import { useGameStore, GAME_PHASES, DEFAULT_BOARD_LENGTH, DEFAULT_TIMER_SECONDS } from "../store/gameStore";
+import { useGameStore, DEFAULT_BOARD_LENGTH, DEFAULT_TIMER_SECONDS } from "../store/gameStore";
 import { useDevice } from "../context/DeviceContext";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
@@ -66,14 +67,14 @@ export function LobbyPage() {
 
   const createRoom = useGameStore((s) => s.createRoom);
   const joinRoom   = useGameStore((s) => s.joinRoom);
-  const setPhase   = useGameStore((s) => s.setPhase);
   const { claimTeam, deviceId } = useDevice();
+  const navigate = useNavigate();
 
   const handleCreate = async () => {
     setIsCreating(true);
-    await createRoom({ numTeams, boardLength, timerSeconds, autoDing, hostDeviceId: deviceId });
+    const code = await createRoom({ numTeams, boardLength, timerSeconds, autoDing, hostDeviceId: deviceId });
     claimTeam(0, true); // host = team 0
-    // setIsCreating(false) not needed — component unmounts on phase change
+    navigate(`/game/${code}`);
   };
 
   const handleJoin = async () => {
@@ -95,14 +96,14 @@ export function LobbyPage() {
     }
 
     joinRoom(code);
-    // Team selection happens on the TeamSetupPage after state loads from Firebase
+    navigate(`/game/${code}`);
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="w-full max-w-lg">
         <button
-          onClick={() => setPhase(GAME_PHASES.LANDING)}
+          onClick={() => navigate("/")}
           className="flex items-center gap-1.5 text-sky-400 hover:text-sky-600 text-sm mb-6 transition-colors"
         >
           <ArrowLeft size={16} /> Back
