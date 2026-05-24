@@ -27,7 +27,7 @@ export function DingReviewModal() {
           <motion.div
             key="bd"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-indigo-950/40 backdrop-blur-sm z-50"
+            className="fixed inset-0 bg-sky-950/40 backdrop-blur-sm z-50"
           />
           <motion.div
             key="panel"
@@ -47,11 +47,11 @@ export function DingReviewModal() {
               </motion.div>
 
               <h2 className="font-display text-3xl text-red-600 mb-1">DING!</h2>
-              <p className="text-indigo-500 text-sm mb-5">Timer paused — host reviews the call</p>
+              <p className="text-sky-500 text-sm mb-5">Timer paused — host reviews the call</p>
 
-              <div className="bg-indigo-50 rounded-2xl p-4 mb-5 space-y-3">
+              <div className="bg-sky-50 rounded-2xl p-4 mb-5 space-y-3">
                 <div>
-                  <p className="text-xs text-indigo-400 mb-1">Called by</p>
+                  <p className="text-xs text-sky-400 mb-1">Called by</p>
                   <div className="flex items-center justify-center gap-2">
                     <span className="text-2xl">{dingTeam?.pawn}</span>
                     <span className="font-display text-lg" style={{ color: dingTeam?.color?.hex }}>
@@ -59,9 +59,9 @@ export function DingReviewModal() {
                     </span>
                   </div>
                 </div>
-                <div className="h-px bg-indigo-100" />
+                <div className="h-px bg-sky-100" />
                 <div>
-                  <p className="text-xs text-indigo-400 mb-1">Against</p>
+                  <p className="text-xs text-sky-400 mb-1">Against</p>
                   <div className="flex items-center justify-center gap-2">
                     <span className="text-2xl">{activeTeam?.pawn}</span>
                     <span className="font-display text-lg" style={{ color: activeTeam?.color?.hex }}>
@@ -71,8 +71,8 @@ export function DingReviewModal() {
                 </div>
               </div>
 
-              <p className="text-indigo-400 text-xs mb-5">
-                Did <strong className="text-indigo-700">{activeTeam?.name}</strong> say "um", "uh", a filler sound, or break an active rule?
+              <p className="text-sky-400 text-xs mb-5">
+                Did <strong className="text-sky-700">{activeTeam?.name}</strong> say "um", "uh", a filler sound, or break an active rule?
               </p>
 
               <div className="flex gap-3">
@@ -88,9 +88,9 @@ export function DingReviewModal() {
                   variant="secondary" size="lg" className="flex-1 flex-col gap-0.5 py-3"
                   onClick={rejectDing}
                 >
-                  <XCircle size={20} className="text-indigo-400" />
-                  <span className="text-base text-indigo-700">No Call</span>
-                  <span className="text-xs font-body font-normal text-indigo-400">Resume</span>
+                  <XCircle size={20} className="text-sky-400" />
+                  <span className="text-base text-sky-700">No Call</span>
+                  <span className="text-xs font-body font-normal text-sky-400">Resume</span>
                 </Button>
               </div>
             </div>

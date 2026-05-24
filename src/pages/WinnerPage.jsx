@@ -12,7 +12,7 @@ import { Button } from "../components/ui/Button";
 
 function launch() {
   const end = Date.now() + 4500;
-  const colors = ["#6366f1", "#8b5cf6", "#06b6d4", "#f59e0b", "#10b981", "#ec4899"];
+  const colors = ["#0ea5e9", "#06b6d4", "#0284c7", "#38bdf8", "#f59e0b", "#10b981"];
 
   confetti({ particleCount: 140, spread: 180, origin: { x: 0.5, y: 0.55 }, colors });
 
@@ -49,7 +49,7 @@ export function WinnerPage() {
             style={{
               width:  160 + i * 80,
               height: 160 + i * 80,
-              background: winner?.color?.hex ?? "#6366f1",
+              background: winner?.color?.hex ?? "#0ea5e9",
               top:  `${10 + i * 15}%`,
               left: `${(i % 3) * 35}%`,
               filter: "blur(90px)",
@@ -77,23 +77,23 @@ export function WinnerPage() {
           initial={{ opacity: 0, y: 32 }} animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.45, type: "spring" }}
         >
-          <p className="text-indigo-400 text-sm font-bold uppercase tracking-widest mb-2">Winner!</p>
+          <p className="text-sky-400 text-sm font-bold uppercase tracking-widest mb-2">Winner!</p>
           <div className="flex items-center justify-center gap-3 mb-2">
             <span className="text-5xl">{winner?.pawn}</span>
             <h1 className="font-display text-5xl" style={{ color: winner?.color?.hex }}>
               {winner?.name}
             </h1>
           </div>
-          <p className="text-indigo-400">Reached the finish line first!</p>
+          <p className="text-sky-400">Reached the finish line first!</p>
         </motion.div>
 
         {/* Leaderboard */}
         <motion.div
           initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.75 }}
-          className="mt-8 bg-white rounded-3xl border border-indigo-100 shadow-sm p-5"
+          className="mt-8 bg-white rounded-3xl border border-sky-100 shadow-sm p-5"
         >
-          <h2 className="font-display text-xl text-indigo-700 mb-4">Final Standings</h2>
+          <h2 className="font-display text-xl text-sky-700 mb-4">Final Standings</h2>
           <div className="space-y-2.5">
             {sorted.map((team, i) => {
               const isWinner = team.id === winnerTeamId;
@@ -104,14 +104,14 @@ export function WinnerPage() {
                   initial={{ opacity: 0, x: -24 }} animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.85 + i * 0.09 }}
                   className={`flex items-center gap-3 rounded-2xl p-3 border ${
-                    isWinner ? "border-amber-300 bg-amber-50" : "border-indigo-100 bg-indigo-50/50"
+                    isWinner ? "border-amber-300 bg-amber-50" : "border-sky-100 bg-sky-50/50"
                   }`}
                 >
-                  <span className="font-bold text-indigo-300 w-5 text-center">{i + 1}</span>
+                  <span className="font-bold text-sky-300 w-5 text-center">{i + 1}</span>
                   <span className="text-2xl">{team.pawn}</span>
                   <div className="flex-1 min-w-0">
                     <p className="font-display text-sm" style={{ color: team.color?.hex }}>{team.name}</p>
-                    <div className="h-1.5 rounded-full bg-indigo-100 mt-1 overflow-hidden">
+                    <div className="h-1.5 rounded-full bg-sky-100 mt-1 overflow-hidden">
                       <motion.div
                         className="h-full rounded-full"
                         style={{ backgroundColor: team.color?.hex }}
@@ -121,7 +121,7 @@ export function WinnerPage() {
                       />
                     </div>
                   </div>
-                  <span className="text-xs text-indigo-300 font-mono">{team.position}/{boardLength}</span>
+                  <span className="text-xs text-sky-300 font-mono">{team.position}/{boardLength}</span>
                   {isWinner && <Crown size={18} className="text-amber-500 fill-amber-200" />}
                 </motion.div>
               );

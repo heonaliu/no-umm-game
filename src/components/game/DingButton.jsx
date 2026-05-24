@@ -1,18 +1,32 @@
 /**
- * DingButton — large button shown on NON-ACTIVE team devices.
- * Each team has their own dedicated button.
+ * DingButton — large button for non-active teams.
+ *
+ * Sound strategy: playDing() fires locally when pressing, AND
+ * a global useEffect on dingCount fires on every device (including
+ * devices that didn't press, so they hear the ding too).
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Bell, Mic } from "lucide-react";
 import { useGameStore, TURN_PHASES } from "../../store/gameStore";
+import { playDing } from "../../utils/sounds";
 import clsx from "clsx";
+
+/** Mounted once in GameplayPage — plays ding sound on ALL devices when dingCount changes. */
+export function DingSoundListener() {
+  const dingCount = useGameStore((s) => s.dingCount);
+  useEffect(() => {
+    if (dingCount > 0) playDing();
+  }, [dingCount]);
+  return null;
+}
 
 export function DingButton({ teamIndex }) {
   const team             = useGameStore((s) => s.teams[teamIndex]);
   const currentTeamIndex = useGameStore((s) => s.currentTeamIndex);
   const turnPhase        = useGameStore((s) => s.turnPhase);
+  const autoDing         = useGameStore((s) => s.autoDing);
   const pressDing        = useGameStore((s) => s.pressDing);
   const [rippling, setRippling] = useState(false);
 
@@ -23,7 +37,7 @@ export function DingButton({ teamIndex }) {
     if (!canDing) return;
     setRippling(true);
     setTimeout(() => setRippling(false), 700);
-    pressDing(teamIndex);
+    pressDing(teamIndex); // sound fires via DingSoundListener watching dingCount
   };
 
   return (
@@ -39,7 +53,7 @@ export function DingButton({ teamIndex }) {
         canDing
           ? "bg-red-600 border-red-500 text-white shadow-lg shadow-red-200 cursor-pointer"
           : isActiveTeam
-            ? "bg-indigo-50 border-indigo-200 text-indigo-400 cursor-default"
+            ? "bg-sky-50 border-sky-200 text-sky-400 cursor-default"
             : "bg-gray-50 border-gray-200 text-gray-300 cursor-not-allowed opacity-50"
       )}
     >
@@ -47,7 +61,7 @@ export function DingButton({ teamIndex }) {
       <AnimatePresence>
         {rippling && (
           <motion.span
-            key="ripple"
+            key="r"
             initial={{ scale: 0, opacity: 0.6 }}
             animate={{ scale: 5, opacity: 0 }}
             exit={{ opacity: 0 }}
@@ -57,23 +71,18 @@ export function DingButton({ teamIndex }) {
         )}
       </AnimatePresence>
 
-      {/* Pawn */}
       <span className="text-2xl shrink-0 relative z-10">{team?.pawn}</span>
-
-      {/* Labels */}
       <div className="text-left flex-1 min-w-0 relative z-10">
-        <p className={clsx("text-xs font-bold uppercase tracking-widest", canDing ? "text-red-200" : "text-current opacity-70")}>
-          {isActiveTeam ? "Your Team Is Describing" : "Press to DING"}
+        <p className={clsx("text-xs font-bold uppercase tracking-widest", canDing ? "text-red-200" : "opacity-70")}>
+          {isActiveTeam ? "Your Team Is Describing" : autoDing ? "Instant DING!" : "Press to DING"}
         </p>
         <p className="font-display text-lg leading-tight truncate" style={canDing ? {} : { color: team?.color?.hex }}>
           {team?.name}
         </p>
       </div>
-
-      {/* Icon */}
       <div className="relative z-10 shrink-0">
         {isActiveTeam ? (
-          <Mic size={24} className="text-indigo-400" />
+          <Mic size={24} className="text-sky-400" />
         ) : canDing ? (
           <motion.div
             animate={{ rotate: [-8, 8, -5, 5, 0] }}

@@ -28,7 +28,7 @@ import { isOnlineMode } from "../lib/firebase";
 import { GameBoard }          from "../components/board/GameBoard";
 import { CountdownTimer }     from "../components/game/CountdownTimer";
 import { WordCard }           from "../components/game/WordCard";
-import { DingButton }         from "../components/game/DingButton";
+import { DingButton, DingSoundListener } from "../components/game/DingButton";
 import { DingReviewModal }    from "../components/game/DingReviewModal";
 import { RuleRevealModal }    from "../components/game/RuleRevealModal";
 import { ActiveRulesPanel }   from "../components/game/ActiveRulesPanel";
@@ -57,11 +57,11 @@ function ListeningView() {
   return (
     <div className="min-h-screen flex flex-col p-4 gap-4 max-w-lg mx-auto">
       {/* Header */}
-      <div className="rounded-2xl bg-white border border-indigo-100 p-4 flex items-center gap-3 shadow-sm">
+      <div className="rounded-2xl bg-white border border-sky-100 p-4 flex items-center gap-3 shadow-sm">
         <span className="text-3xl">{activeTeam?.pawn}</span>
         <div>
-          <p className="text-xs text-indigo-400 font-bold uppercase tracking-widest">Describing now</p>
-          <p className="font-display text-lg text-indigo-900" style={{ color: activeTeam?.color?.hex }}>
+          <p className="text-xs text-sky-400 font-bold uppercase tracking-widest">Describing now</p>
+          <p className="font-display text-lg text-sky-900" style={{ color: activeTeam?.color?.hex }}>
             {activeTeam?.name}
           </p>
         </div>
@@ -110,7 +110,7 @@ function ListeningView() {
       </motion.button>
 
       {!isDescribing && turnPhase !== TURN_PHASES.DING_REVIEW && (
-        <p className="text-center text-sm text-indigo-300">
+        <p className="text-center text-sm text-sky-300">
           {turnPhase === TURN_PHASES.IDLE ? "Waiting for the active team to start their turn…"
           : turnPhase === TURN_PHASES.TURN_END ? "Turn ended — waiting for next turn…"
           : ""}
@@ -180,14 +180,14 @@ function ActiveView() {
             className="rounded-2xl border-2 p-4 text-center bg-white shadow-sm"
             style={{ borderColor: activeTeam?.color?.hex + "60" }}
           >
-            <p className="text-xs font-bold uppercase tracking-widest text-indigo-400 mb-1">Active Team</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-sky-400 mb-1">Active Team</p>
             <div className="flex items-center justify-center gap-2">
               <span className="text-4xl">{activeTeam?.pawn}</span>
               <h2 className="font-display text-3xl" style={{ color: activeTeam?.color?.hex }}>
                 {activeTeam?.name}
               </h2>
             </div>
-            <p className="text-indigo-300 text-xs mt-1">
+            <p className="text-sky-300 text-xs mt-1">
               Space {activeTeam?.position} / {boardLength}
               {inDanger && <span className="text-red-500 font-bold ml-2">🔥 Danger Zone</span>}
             </p>
@@ -200,8 +200,8 @@ function ActiveView() {
                 initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
                 className="space-y-3"
               >
-                <div className="rounded-2xl bg-indigo-50 border border-indigo-100 p-5 text-center text-indigo-600 text-sm">
-                  <Mic size={28} className="mx-auto mb-3 text-indigo-400" />
+                <div className="rounded-2xl bg-sky-50 border border-sky-100 p-5 text-center text-sky-600 text-sm">
+                  <Mic size={28} className="mx-auto mb-3 text-sky-400" />
                   <p>
                     Choose a describer for{" "}
                     <strong style={{ color: activeTeam?.color?.hex }}>{activeTeam?.name}</strong>.
@@ -249,7 +249,7 @@ function ActiveView() {
                   <CheckCircle size={22} /> Correct! +1 Space
                 </motion.button>
 
-                <p className="text-xs text-indigo-300 text-center">
+                <p className="text-xs text-sky-300 text-center">
                   Tap after both words guessed in order
                 </p>
               </motion.div>
@@ -261,10 +261,10 @@ function ActiveView() {
                 initial={{ opacity: 0, scale: 0.92 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
                 className="space-y-4"
               >
-                <div className="rounded-2xl border-2 border-indigo-200 bg-indigo-50 p-5 text-center">
-                  <Timer size={36} className="mx-auto mb-2 text-indigo-400" />
-                  <h2 className="font-display text-2xl text-indigo-900 mb-1">Time's Up!</h2>
-                  <p className="text-indigo-500 text-sm">
+                <div className="rounded-2xl border-2 border-sky-200 bg-sky-50 p-5 text-center">
+                  <Timer size={36} className="mx-auto mb-2 text-sky-400" />
+                  <h2 className="font-display text-2xl text-sky-900 mb-1">Time's Up!</h2>
+                  <p className="text-sky-500 text-sm">
                     <strong style={{ color: activeTeam?.color?.hex }}>{activeTeam?.name}</strong>{" "}
                     scored <strong className="text-emerald-600">{correctThisTurn}</strong> correct
                     {correctThisTurn === 1 ? " guess" : " guesses"} · now at space{" "}
@@ -285,7 +285,7 @@ function ActiveView() {
                 initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
                 className="space-y-2"
               >
-                <p className="text-xs font-bold uppercase tracking-widest text-indigo-300 text-center flex items-center justify-center gap-1.5">
+                <p className="text-xs font-bold uppercase tracking-widest text-sky-300 text-center flex items-center justify-center gap-1.5">
                   <Bell size={12} /> Other teams — tap DING to flag a violation!
                 </p>
                 {teams.map((_, i) => <DingButton key={i} teamIndex={i} />)}
@@ -330,6 +330,7 @@ export function GameplayPage() {
 
   return (
     <>
+      <DingSoundListener />
       {isMyTurn ? <ActiveView /> : <ListeningView />}
       <DingReviewModal />
       <RuleRevealModal

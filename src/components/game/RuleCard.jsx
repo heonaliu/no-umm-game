@@ -31,14 +31,14 @@ export function RuleCard({
         compact ? "p-3" : "p-4",
         ds.wrap,
         onToggle && "cursor-pointer hover:brightness-105 select-none",
-        selected && "ring-2 ring-indigo-400 ring-offset-2 border-indigo-400 brightness-105",
+        selected && "ring-2 ring-sky-400 ring-offset-2 border-sky-400 brightness-105",
       )}
     >
       {selected && (
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
-          className="absolute top-2 right-2 w-5 h-5 rounded-full bg-indigo-600 flex items-center justify-center"
+          className="absolute top-2 right-2 w-5 h-5 rounded-full bg-sky-600 flex items-center justify-center"
         >
           <Check size={12} strokeWidth={3} className="text-white" />
         </motion.div>
@@ -46,14 +46,14 @@ export function RuleCard({
 
       <div className="flex items-start gap-3">
         <div className="shrink-0 w-8 h-8 rounded-xl bg-white border border-current/10 flex items-center justify-center">
-          <Shield size={16} className="text-indigo-400" />
+          <Shield size={16} className="text-sky-400" />
         </div>
         <div className="min-w-0 flex-1">
-          <h3 className={clsx("font-display text-indigo-900", compact ? "text-sm" : "text-base")}>
+          <h3 className={clsx("font-display text-sky-900", compact ? "text-sm" : "text-base")}>
             {rule.title}
           </h3>
           {!compact && (
-            <p className="text-indigo-600/70 text-sm mt-0.5 leading-snug">{rule.description}</p>
+            <p className="text-sky-600/70 text-sm mt-0.5 leading-snug">{rule.description}</p>
           )}
           <span className={clsx("text-[10px] font-bold uppercase tracking-widest mt-1 inline-block px-1.5 py-0.5 rounded-full", ds.badge)}>
             {rule.difficulty}

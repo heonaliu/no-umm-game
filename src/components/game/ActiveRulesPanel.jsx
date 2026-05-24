@@ -23,7 +23,7 @@ export function ActiveRulesPanel() {
 
   if (!inDanger && allActiveRules.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-indigo-200 bg-indigo-50/40 p-4 text-center text-indigo-300 text-sm flex items-center justify-center gap-2">
+      <div className="rounded-2xl border border-dashed border-sky-200 bg-sky-50/40 p-4 text-center text-sky-300 text-sm flex items-center justify-center gap-2">
         <Shield size={15} />
         No active rules yet — land on a <span className="text-amber-500 font-bold">★</span> space to reveal them
       </div>
@@ -32,7 +32,7 @@ export function ActiveRulesPanel() {
 
   return (
     <div className="space-y-2">
-      <p className="text-xs font-bold uppercase tracking-widest text-indigo-400 flex items-center gap-1.5">
+      <p className="text-xs font-bold uppercase tracking-widest text-sky-400 flex items-center gap-1.5">
         <Shield size={13} /> Active Rules
       </p>
 

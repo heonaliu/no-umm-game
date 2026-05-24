@@ -45,9 +45,9 @@ function TeamEditor({ team, index }) {
                 onBlur={save}
                 onKeyDown={(e) => e.key === "Enter" && save()}
                 maxLength={20}
-                className="flex-1 bg-indigo-50 border-2 border-indigo-300 rounded-xl px-3 py-1.5 text-indigo-900 font-display text-xl focus:outline-none"
+                className="flex-1 bg-sky-50 border-2 border-sky-300 rounded-xl px-3 py-1.5 text-sky-900 font-display text-xl focus:outline-none"
               />
-              <button onClick={save} className="text-indigo-600 font-bold text-sm px-2">
+              <button onClick={save} className="text-sky-600 font-bold text-sm px-2">
                 <Check size={18} />
               </button>
             </div>
@@ -56,7 +56,7 @@ function TeamEditor({ team, index }) {
               <span className="font-display text-2xl" style={{ color: team.color?.hex }}>
                 {team.name}
               </span>
-              <Pencil size={14} className="text-indigo-200 group-hover:text-indigo-400 transition-colors" />
+              <Pencil size={14} className="text-sky-200 group-hover:text-sky-400 transition-colors" />
             </button>
           )}
         </div>
@@ -64,7 +64,7 @@ function TeamEditor({ team, index }) {
 
       {/* Color */}
       <div>
-        <p className="text-xs uppercase tracking-widest text-indigo-300 mb-2">Colour</p>
+        <p className="text-xs uppercase tracking-widest text-sky-300 mb-2">Colour</p>
         <div className="flex gap-2 flex-wrap">
           {TEAM_COLORS.map((c) => (
             <button
@@ -72,7 +72,7 @@ function TeamEditor({ team, index }) {
               onClick={() => updateTeam(team.id, { color: c })}
               className={`w-8 h-8 rounded-full border-2 transition-all ${
                 team.color?.id === c.id
-                  ? "border-indigo-600 scale-115 ring-2 ring-indigo-300"
+                  ? "border-sky-600 scale-115 ring-2 ring-sky-300"
                   : "border-transparent opacity-70 hover:opacity-100"
               }`}
               style={{ backgroundColor: c.hex }}
@@ -84,7 +84,7 @@ function TeamEditor({ team, index }) {
 
       {/* Pawn */}
       <div>
-        <p className="text-xs uppercase tracking-widest text-indigo-300 mb-2">Pawn</p>
+        <p className="text-xs uppercase tracking-widest text-sky-300 mb-2">Pawn</p>
         <div className="flex gap-2 flex-wrap">
           {TEAM_PAWNS.map((pawn) => (
             <button
@@ -92,8 +92,8 @@ function TeamEditor({ team, index }) {
               onClick={() => updateTeam(team.id, { pawn })}
               className={`w-9 h-9 rounded-xl text-xl flex items-center justify-center transition-all border-2 ${
                 team.pawn === pawn
-                  ? "border-indigo-400 bg-indigo-50 scale-110"
-                  : "border-transparent bg-indigo-50/40 hover:bg-indigo-50"
+                  ? "border-sky-400 bg-sky-50 scale-110"
+                  : "border-transparent bg-sky-50/40 hover:bg-sky-50"
               }`}
             >
               {pawn}
@@ -129,7 +129,7 @@ export function TeamSetupPage() {
       <div className="max-w-2xl mx-auto">
         <button
           onClick={() => setPhase(GAME_PHASES.LOBBY)}
-          className="flex items-center gap-1.5 text-indigo-400 hover:text-indigo-600 text-sm mt-6 mb-4 transition-colors"
+          className="flex items-center gap-1.5 text-sky-400 hover:text-sky-600 text-sm mt-6 mb-4 transition-colors"
         >
           <ArrowLeft size={16} /> Back
         </button>
@@ -140,19 +140,19 @@ export function TeamSetupPage() {
           className="text-center mb-6"
         >
           {/* Room code */}
-          <div className="inline-flex items-center gap-3 rounded-2xl bg-white border border-indigo-200 px-5 py-2.5 mb-4 shadow-sm">
-            <span className="text-indigo-400 text-xs font-bold uppercase tracking-widest">Room Code</span>
-            <span className="font-display text-2xl text-indigo-900 tracking-[0.2em]">{roomCode}</span>
-            <button onClick={copyCode} className="text-indigo-300 hover:text-indigo-500 transition-colors">
+          <div className="inline-flex items-center gap-3 rounded-2xl bg-white border border-sky-200 px-5 py-2.5 mb-4 shadow-sm">
+            <span className="text-sky-400 text-xs font-bold uppercase tracking-widest">Room Code</span>
+            <span className="font-display text-2xl text-sky-900 tracking-[0.2em]">{roomCode}</span>
+            <button onClick={copyCode} className="text-sky-300 hover:text-sky-500 transition-colors">
               {copied ? <Check size={16} className="text-emerald-500" /> : <Copy size={16} />}
             </button>
           </div>
 
-          <h1 className="font-display text-4xl text-indigo-950">Team Setup</h1>
-          <p className="text-indigo-400 mt-1">Customise each team before playing</p>
+          <h1 className="font-display text-4xl text-sky-950">Team Setup</h1>
+          <p className="text-sky-400 mt-1">Customise each team before playing</p>
 
           {isOnlineMode && (
-            <p className="text-xs text-indigo-300 mt-2">
+            <p className="text-xs text-sky-300 mt-2">
               Share the room code — each team opens this app and joins with the code
             </p>
           )}
@@ -162,9 +162,9 @@ export function TeamSetupPage() {
         {isOnlineMode && (
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-            className="mb-6 rounded-2xl bg-indigo-50 border border-indigo-200 p-4"
+            className="mb-6 rounded-2xl bg-sky-50 border border-sky-200 p-4"
           >
-            <p className="text-xs font-bold uppercase tracking-widest text-indigo-400 mb-3">
+            <p className="text-xs font-bold uppercase tracking-widest text-sky-400 mb-3">
               I am representing…
             </p>
             <div className="flex gap-2 flex-wrap">
@@ -174,8 +174,8 @@ export function TeamSetupPage() {
                   onClick={() => handleClaim(i)}
                   className={`flex items-center gap-2 px-3 py-2 rounded-xl border-2 font-bold text-sm transition-all ${
                     myTeamIndex === i
-                      ? "border-indigo-500 bg-indigo-100 text-indigo-800"
-                      : "border-indigo-100 bg-white text-indigo-500 hover:border-indigo-300"
+                      ? "border-sky-500 bg-sky-100 text-sky-800"
+                      : "border-sky-100 bg-white text-sky-500 hover:border-sky-300"
                   }`}
                   style={myTeamIndex === i ? { borderColor: team.color?.hex } : {}}
                 >
@@ -183,7 +183,7 @@ export function TeamSetupPage() {
                   <span style={{ color: myTeamIndex === i ? team.color?.hex : undefined }}>
                     {team.name}
                   </span>
-                  {myTeamIndex === i && <Check size={14} className="text-indigo-600" />}
+                  {myTeamIndex === i && <Check size={14} className="text-sky-600" />}
                 </button>
               ))}
             </div>
@@ -209,20 +209,20 @@ export function TeamSetupPage() {
                 className={`flex items-center gap-3 rounded-2xl p-4 border-2 bg-white ${
                   myTeamIndex === i ? "shadow-sm" : "opacity-70"
                 }`}
-                style={{ borderColor: myTeamIndex === i ? team.color?.hex + "80" : "#e0e7ff" }}
+                style={{ borderColor: myTeamIndex === i ? team.color?.hex + "80" : "#e0f2fe" }}
               >
                 <span className="text-3xl">{team.pawn}</span>
                 <span className="font-display text-xl" style={{ color: team.color?.hex }}>
                   {team.name}
                 </span>
                 {myTeamIndex === i && (
-                  <span className="ml-auto text-xs font-bold text-indigo-500 bg-indigo-100 px-2 py-0.5 rounded-full">
+                  <span className="ml-auto text-xs font-bold text-sky-500 bg-sky-100 px-2 py-0.5 rounded-full">
                     You
                   </span>
                 )}
               </div>
             ))}
-            <p className="text-xs text-center text-indigo-300">
+            <p className="text-xs text-center text-sky-300">
               Waiting for the host to customise teams…
             </p>
           </div>
@@ -230,7 +230,7 @@ export function TeamSetupPage() {
 
         {/* Bottom CTA — only host proceeds */}
         {isHost && (
-          <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-indigo-50 via-indigo-50/90 to-transparent">
+          <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-sky-50 via-sky-50/90 to-transparent">
             <div className="max-w-2xl mx-auto">
               <Button size="lg" variant="primary" className="w-full" onClick={dealRuleCards} icon={ChevronRight}>
                 Next: Rule Drafting

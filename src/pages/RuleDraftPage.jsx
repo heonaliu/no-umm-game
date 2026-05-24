@@ -47,12 +47,12 @@ export function RuleDraftPage() {
           initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }}
           className="text-center mb-7"
         >
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-violet-100 mb-4">
-            <Layers size={26} className="text-violet-600" />
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-sky-100 mb-4">
+            <Layers size={26} className="text-sky-600" />
           </div>
-          <h1 className="font-display text-4xl text-indigo-950">Rule Draft</h1>
-          <p className="text-indigo-400 text-sm mt-1">
-            Each team secretly picks <strong className="text-indigo-700">3 rule cards</strong> to give to another team
+          <h1 className="font-display text-4xl text-sky-950">Rule Draft</h1>
+          <p className="text-sky-400 text-sm mt-1">
+            Each team secretly picks <strong className="text-sky-700">3 rule cards</strong> to give to another team
           </p>
 
           {/* Progress pills */}
@@ -72,7 +72,7 @@ export function RuleDraftPage() {
                       ? t.color?.hex
                       : (!isOnlineMode && i === localIdx) || (isOnlineMode && i === myTeamIndex)
                         ? t.color?.hex
-                        : "#e0e7ff",
+                        : "#e0f2fe",
                   }}
                 />
               );
@@ -94,7 +94,7 @@ export function RuleDraftPage() {
                 <h2 className="font-display text-2xl" style={{ color: draftTeam?.color?.hex }}>
                   {draftTeam?.name}
                 </h2>
-                <p className="text-indigo-400 text-xs">
+                <p className="text-sky-400 text-xs">
                   {revealed
                     ? `Choose 3 cards to give to ${nextTeam?.name}`
                     : isOnlineMode
@@ -112,11 +112,11 @@ export function RuleDraftPage() {
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                 {/* Counter */}
                 <div className="flex items-center justify-between mb-4">
-                  <p className="text-sm text-indigo-500">
-                    Selected: <strong className="text-indigo-900">{mySelection.length}</strong> / 3
+                  <p className="text-sm text-sky-500">
+                    Selected: <strong className="text-sky-900">{mySelection.length}</strong> / 3
                     {done && <span className="text-emerald-600 ml-2">✓ Done!</span>}
                   </p>
-                  <p className="text-xs text-indigo-300">→ passes to {nextTeam?.name} {nextTeam?.pawn}</p>
+                  <p className="text-xs text-sky-300">→ passes to {nextTeam?.name} {nextTeam?.pawn}</p>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
@@ -164,9 +164,9 @@ export function RuleDraftPage() {
               <div
                 key={t.id}
                 className={`flex items-center gap-3 rounded-xl px-4 py-2.5 border transition-all ${
-                  isMine    ? "border-indigo-300 bg-indigo-50"
+                  isMine    ? "border-sky-300 bg-sky-50"
                   : teamDone ? "border-emerald-200 bg-emerald-50"
-                  :            "border-indigo-100 bg-white"
+                  :            "border-sky-100 bg-white"
                 }`}
               >
                 <span className="text-xl">{t.pawn}</span>
@@ -174,8 +174,8 @@ export function RuleDraftPage() {
                 {teamDone
                   ? <span className="text-emerald-600 text-sm font-bold flex items-center gap-1"><Check size={14} /> Ready</span>
                   : isMine
-                    ? <span className="text-indigo-400 text-sm">Drafting…</span>
-                    : <span className="text-indigo-200 text-sm">Waiting</span>
+                    ? <span className="text-sky-400 text-sm">Drafting…</span>
+                    : <span className="text-sky-200 text-sm">Waiting</span>
                 }
               </div>
             );
@@ -184,7 +184,7 @@ export function RuleDraftPage() {
 
         {/* Finalize — visible to host or all in local mode */}
         {(isHost || !isOnlineMode) && (
-          <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-indigo-50 via-indigo-50/90 to-transparent">
+          <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-sky-50 via-sky-50/90 to-transparent">
             <div className="max-w-2xl mx-auto">
               <Button
                 size="lg" variant="primary" className="w-full"

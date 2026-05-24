@@ -1,53 +1,46 @@
 /**
- * useConfetti — triggers canvas-confetti bursts when confettiTrigger changes.
+ * useConfetti — reserved for the winner celebration.
+ * Correct-guess bursts are now handled by burstConfetti() called directly
+ * in the UI, so this hook is a no-op during normal gameplay.
  */
 
 import { useEffect } from "react";
 import confetti from "canvas-confetti";
 import { useGameStore } from "../store/gameStore";
 
+// Sea-blue party palette
+const COLORS = ["#0ea5e9", "#06b6d4", "#0284c7", "#38bdf8", "#f59e0b", "#10b981"];
+
+/** Global hook — mount once in App.jsx. Only fires on the winner screen. */
 export function useConfetti() {
-  const trigger = useGameStore((s) => s.confettiTrigger);
+  const phase = useGameStore((s) => s.phase);
 
   useEffect(() => {
-    if (trigger === 0) return;
+    if (phase !== "winner") return;
 
-    const duration = 3000;
-    const end = Date.now() + duration;
-
-    const frame = () => {
-      confetti({
-        particleCount: 3,
-        angle: 60,
-        spread: 55,
-        origin: { x: 0 },
-        colors: ["#8b5cf6", "#ec4899", "#06b6d4", "#f59e0b", "#10b981"],
-      });
-      confetti({
-        particleCount: 3,
-        angle: 120,
-        spread: 55,
-        origin: { x: 1 },
-        colors: ["#8b5cf6", "#ec4899", "#06b6d4", "#f59e0b", "#10b981"],
-      });
-
-      if (Date.now() < end) {
-        requestAnimationFrame(frame);
-      }
+    const end = Date.now() + 3500;
+    const tick = () => {
+      confetti({ particleCount: 5, angle: 60,  spread: 65, origin: { x: 0, y: 0.7 }, colors: COLORS });
+      confetti({ particleCount: 5, angle: 120, spread: 65, origin: { x: 1, y: 0.7 }, colors: COLORS });
+      if (Date.now() < end) requestAnimationFrame(tick);
     };
-
-    frame();
-  }, [trigger]);
+    // Big opening burst
+    confetti({ particleCount: 120, spread: 160, origin: { x: 0.5, y: 0.55 }, colors: COLORS });
+    tick();
+  }, [phase]);
 }
 
 /**
- * Trigger a quick single-burst confetti (can be called imperatively)
+ * burstConfetti — quick single pop for correct guesses.
+ * Intentionally short: one call, no loop.
  */
-export function burstConfetti(origin = { x: 0.5, y: 0.7 }) {
+export function burstConfetti(origin = { x: 0.5, y: 0.65 }) {
   confetti({
-    particleCount: 80,
-    spread: 100,
+    particleCount: 42,
+    spread: 75,
+    startVelocity: 38,
+    scalar: 0.9,
     origin,
-    colors: ["#8b5cf6", "#ec4899", "#06b6d4", "#f59e0b", "#10b981"],
+    colors: COLORS,
   });
 }

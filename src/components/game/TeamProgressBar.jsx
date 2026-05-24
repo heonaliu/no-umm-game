@@ -21,8 +21,8 @@ export function TeamProgressBar() {
             className={clsx(
               "rounded-xl p-3 border transition-all",
               isActive
-                ? "border-indigo-300 bg-indigo-50 shadow-sm"
-                : "border-indigo-100 bg-white"
+                ? "border-sky-300 bg-sky-50 shadow-sm"
+                : "border-sky-100 bg-white"
             )}
           >
             <div className="flex items-center justify-between mb-1.5">
@@ -32,20 +32,20 @@ export function TeamProgressBar() {
                   {team.name}
                 </span>
                 {isActive && (
-                  <span className="text-[10px] text-indigo-600 font-bold bg-indigo-100 px-1.5 py-0.5 rounded-full">
+                  <span className="text-[10px] text-sky-600 font-bold bg-sky-100 px-1.5 py-0.5 rounded-full">
                     ACTIVE
                   </span>
                 )}
               </div>
-              <span className="text-xs text-indigo-300 font-mono">
+              <span className="text-xs text-sky-300 font-mono">
                 {team.position}/{boardLength}
               </span>
             </div>
 
-            <div className="h-2 rounded-full bg-indigo-100 overflow-hidden">
+            <div className="h-2 rounded-full bg-sky-100 overflow-hidden">
               <motion.div
                 className="h-full rounded-full"
-                style={{ backgroundColor: team.color?.hex ?? "#6366f1" }}
+                style={{ backgroundColor: team.color?.hex ?? "#0ea5e9" }}
                 animate={{ width: `${pct}%` }}
                 transition={{ type: "spring", stiffness: 80, damping: 14 }}
               />

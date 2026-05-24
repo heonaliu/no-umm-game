@@ -1,13 +1,18 @@
 @import "tailwindcss";
 
+/* ─── Sea-blue colour tokens ─────────────────────────────────────────────────
+   Deep navy anchors the palette; sky-500/cyan-400 give the ocean shimmer.
+   Everything lives on a very light sky-to-cyan gradient background.        */
+
 @layer base {
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
-    background: linear-gradient(145deg, #eef2ff 0%, #f5f3ff 50%, #ede9fe 100%);
+    /* Light sea-sky gradient background */
+    background: linear-gradient(150deg, #f0f9ff 0%, #e0f2fe 55%, #ecfeff 100%);
     background-attachment: fixed;
     min-height: 100vh;
-    color: #1e1b4b;
+    color: #0c2d5e;      /* deep navy default text */
     font-family: 'Nunito', 'Segoe UI', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -17,70 +22,53 @@
 
   h1, h2, h3, h4 {
     font-family: 'Fredoka One', 'Nunito', system-ui, sans-serif;
-    color: #1e1b4b;
-    letter-spacing: -0.01em;
+    color: #0c2d5e;
   }
 
-  /* Scrollbar */
   ::-webkit-scrollbar { width: 6px; height: 6px; }
-  ::-webkit-scrollbar-track { background: #e0e7ff; border-radius: 3px; }
-  ::-webkit-scrollbar-thumb { background: #a5b4fc; border-radius: 3px; }
-  ::-webkit-scrollbar-thumb:hover { background: #6366f1; }
+  ::-webkit-scrollbar-track { background: #e0f2fe; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb { background: #7dd3fc; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #0ea5e9; }
 }
 
 @layer utilities {
   .font-display { font-family: 'Fredoka One', 'Nunito', system-ui, sans-serif; }
   .font-body    { font-family: 'Nunito', 'Segoe UI', system-ui, sans-serif; }
 
-  .text-shadow    { text-shadow: 0 2px 4px rgba(79,70,229,0.15); }
-  .text-shadow-sm { text-shadow: 0 1px 2px rgba(79,70,229,0.12); }
-
-  /* Glass card surface */
+  /* Glass card — frosted over the background gradient */
   .card-surface {
-    background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(199, 210, 254, 0.8);
-    box-shadow: 0 4px 24px rgba(79,70,229,0.08), 0 1px 4px rgba(79,70,229,0.05);
+    background: rgba(255,255,255,0.72);
+    backdrop-filter: blur(14px);
+    border: 1px solid rgba(186,230,253,0.8);   /* sky-200 */
+    box-shadow: 0 4px 24px rgba(2,132,199,0.07), 0 1px 3px rgba(2,132,199,0.05);
   }
 
   /* Solid white card */
   .card-solid {
     background: #ffffff;
-    border: 1px solid #e0e7ff;
-    box-shadow: 0 4px 20px rgba(79,70,229,0.07), 0 1px 3px rgba(79,70,229,0.05);
+    border: 1px solid #bae6fd;   /* sky-200 */
+    box-shadow: 0 2px 12px rgba(2,132,199,0.07);
   }
 
-  /* Inset (inner panels) */
+  /* Inset / inner panel */
   .card-inset {
-    background: rgba(238, 242, 255, 0.6);
-    border: 1px solid #e0e7ff;
+    background: rgba(240,249,255,0.7);  /* sky-50 tinted */
+    border: 1px solid #bae6fd;
   }
 
-  /* Glow ring for active elements */
-  .ring-glow {
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
-  }
-
-  /* Danger shimmer */
+  /* Danger zone pulse */
   .danger-shimmer {
     animation: dangerPulse 1.8s ease-in-out infinite;
   }
   @keyframes dangerPulse {
-    0%, 100% { background-color: rgb(254 242 242); }
-    50%       { background-color: rgb(254 226 226); }
+    0%, 100% { background-color: rgb(254,242,242); }
+    50%       { background-color: rgb(254,226,226); }
   }
 
-  /* DING ripple */
-  @keyframes dingRipple {
-    0%   { transform: scale(1); }
-    40%  { transform: scale(1.06); }
-    100% { transform: scale(1); }
-  }
-
-  /* Floating animation for decorative elements */
+  /* Floating blob decoration */
   @keyframes float {
     0%, 100% { transform: translateY(0); }
-    50%       { transform: translateY(-8px); }
+    50%       { transform: translateY(-10px); }
   }
-  .float { animation: float 4s ease-in-out infinite; }
+  .float { animation: float 5s ease-in-out infinite; }
 }

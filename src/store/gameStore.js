@@ -1,16 +1,10 @@
 /**
  * gameStore.js — Zustand store for all game state.
  *
- * Timer strategy:
- *   Rather than a countdown stored in state (which breaks across devices),
- *   we store `turnStartTime` (epoch ms) and `timerPausedAt`.
- *   Every device independently computes remaining time via useGameTimer().
- *
- * Multiplayer strategy:
- *   After every mutating action, `_publish()` writes the shareable slice
- *   to Firebase when online mode is active.  When Firebase pushes an update
- *   from another device, `syncFromRemote()` applies it locally.
- *   In local mode (no Firebase) everything is purely in-memory + localStorage.
+ * Timer:      timestamp-based (turnStartTime epoch ms), computed locally on every device.
+ * Multiplayer: _publish() writes sync slice to Firebase after every mutation.
+ * autoDing:   when true, DING resolves immediately without host confirmation.
+ * dingCount:  incremented on every ding — all devices watch it to play the sound.
  */
 
 import { create } from "zustand";
@@ -19,7 +13,7 @@ import { generateDefaultTeams, generateRoomCode } from "../data/teams";
 import { drawRules } from "../data/rules";
 import { drawWordPair } from "../data/words";
 import { pushRoom, isOnlineMode } from "../lib/roomSync";
-import { crossedYellow, YELLOW_INTERVAL } from "./boardHelpers";
+import { crossedYellow } from "./boardHelpers";
 
 export { isYellowSpace, isDangerZone, DANGER_ZONE_SIZE, YELLOW_INTERVAL } from "./boardHelpers";
 
@@ -41,17 +35,16 @@ export const TURN_PHASES = {
   TURN_END:    "turn_end",
 };
 
-const DEFAULT_BOARD  = 30;
-const DEFAULT_TIMER  = 45;
+const DEFAULT_BOARD = 30;
+const DEFAULT_TIMER = 45;
 
-// ─── Fields that are synced to Firebase ───────────────────────────────────────
-
+// Fields synced to Firebase
 const SYNC_FIELDS = [
-  "phase", "numTeams", "boardLength", "timerSeconds",
+  "phase", "numTeams", "boardLength", "timerSeconds", "autoDing",
   "teams", "currentTeamIndex", "turnPhase",
   "turnStartTime", "timerPausedAt", "timeElapsedBeforePause",
   "currentWordPair", "usedWordPairs",
-  "dingTeamIndex", "activeRules", "turnLog",
+  "dingTeamIndex", "dingCount", "activeRules", "turnLog",
   "winnerTeamId", "ruleDraftComplete",
 ];
 
@@ -64,6 +57,7 @@ const initial = {
   numTeams:     2,
   boardLength:  DEFAULT_BOARD,
   timerSeconds: DEFAULT_TIMER,
+  autoDing:     false,   // ← skip host confirmation when true
 
   teams: [],
   ruleDraftComplete: false,
@@ -71,18 +65,17 @@ const initial = {
   currentTeamIndex: 0,
   turnPhase: TURN_PHASES.IDLE,
 
-  // Timestamp-based timer (works across devices)
-  turnStartTime: null,             // Date.now() when describing started (or resumed)
-  timerPausedAt: null,             // Date.now() when timer paused (ding/end)
-  timeElapsedBeforePause: 0,       // cumulative seconds already used before current start
+  turnStartTime:          null,
+  timerPausedAt:          null,
+  timeElapsedBeforePause: 0,
 
   currentWordPair: null,
-  usedWordPairs: [],
-  dingTeamIndex: null,
-  activeRules: [],
-  turnLog: [],
-  winnerTeamId: null,
-  confettiTrigger: 0,
+  usedWordPairs:   [],
+  dingTeamIndex:   null,
+  dingCount:       0,    // ← incremented on every ding; all devices play sound when it changes
+  activeRules:     [],
+  turnLog:         [],
+  winnerTeamId:    null,
 };
 
 // ─── Store ────────────────────────────────────────────────────────────────────
@@ -90,7 +83,6 @@ const initial = {
 export const useGameStore = create(
   persist(
     (set, get) => {
-      /** Write the sync slice to Firebase (no-op in local mode). */
       const _publish = () => {
         const s = get();
         if (!s.roomCode || !isOnlineMode) return;
@@ -99,22 +91,45 @@ export const useGameStore = create(
         pushRoom(s.roomCode, slice);
       };
 
+      // Shared logic: score the ding team +1 and resume/end
+      const _applyDing = (dingTeamIndex) => {
+        const { teams, boardLength, usedWordPairs } = get();
+        const dingTeam = teams[dingTeamIndex];
+        const newPos   = Math.min(dingTeam.position + 1, boardLength);
+        const isWinner = newPos >= boardLength;
+        const updatedTeams = teams.map((t, i) =>
+          i === dingTeamIndex ? { ...t, position: newPos } : t
+        );
+        const now     = Date.now();
+        const newPair = drawWordPair(usedWordPairs);
+        set({
+          teams: updatedTeams,
+          dingTeamIndex: null,
+          timerPausedAt: null,
+          turnStartTime: isWinner ? null : now,
+          currentWordPair: isWinner ? get().currentWordPair : newPair,
+          usedWordPairs:   isWinner ? usedWordPairs : [...usedWordPairs, newPair.key],
+          turnPhase:    isWinner ? TURN_PHASES.IDLE : TURN_PHASES.DESCRIBING,
+          winnerTeamId: isWinner ? dingTeam.id : null,
+          phase:        isWinner ? GAME_PHASES.WINNER : GAME_PHASES.GAMEPLAY,
+        });
+      };
+
       return {
         ...initial,
 
-        // ── Phase navigation ───────────────────────────────────────────────
+        // ── Navigation ─────────────────────────────────────────────────────
 
         setPhase: (phase) => { set({ phase }); _publish(); },
-
         goToLanding: () => set({ ...initial }),
 
         // ── Lobby ──────────────────────────────────────────────────────────
 
-        createRoom: ({ numTeams, boardLength, timerSeconds }) => {
+        createRoom: ({ numTeams, boardLength, timerSeconds, autoDing = false }) => {
           const roomCode = generateRoomCode();
           const teams    = generateDefaultTeams(numTeams);
           set({
-            roomCode, numTeams, boardLength, timerSeconds,
+            roomCode, numTeams, boardLength, timerSeconds, autoDing,
             teams,
             phase: GAME_PHASES.TEAM_SETUP,
             ...resetTurnState(),
@@ -124,15 +139,13 @@ export const useGameStore = create(
         },
 
         joinRoom: (code) => {
-          // In online mode the useRoomSync hook will overwrite state from Firebase.
           set({ roomCode: code.toUpperCase(), phase: GAME_PHASES.TEAM_SETUP });
         },
 
-        // ── Syncing from remote (Firebase listener) ────────────────────────
+        // ── Remote sync ────────────────────────────────────────────────────
 
         syncFromRemote: (remote) => {
           const { roomCode } = get();
-          // Only apply remote updates if we're in the same room
           if (!roomCode) return;
           const patch = {};
           for (const k of SYNC_FIELDS) {
@@ -210,35 +223,30 @@ export const useGameStore = create(
           _publish();
         },
 
-        /** Called when the local timer hook detects expiry. */
         handleTimerExpired: () => {
           const { turnPhase } = get();
           if (turnPhase !== TURN_PHASES.DESCRIBING) return;
-          const now = Date.now();
-          set({ timerPausedAt: now, turnPhase: TURN_PHASES.TURN_END });
+          set({ timerPausedAt: Date.now(), turnPhase: TURN_PHASES.TURN_END });
           _publish();
         },
 
         scoreCorrect: () => {
           const { currentTeamIndex, teams, boardLength, usedWordPairs, currentWordPair } = get();
-          const team     = teams[currentTeamIndex];
-          const newPos   = Math.min(team.position + 1, boardLength);
+          const team   = teams[currentTeamIndex];
+          const newPos = Math.min(team.position + 1, boardLength);
           const isWinner = newPos >= boardLength;
 
-          // Check if we crossed a yellow space and should activate a pending rule
-          let activatedRule = null;
-          const updatedTeams = teams.map((t, i) => {
+          let updatedTeams = teams.map((t, i) => {
             if (i !== currentTeamIndex) return t;
             const u = { ...t, position: newPos };
             if (crossedYellow(t.position, newPos) && (u.pendingRules?.length ?? 0) > 0) {
-              activatedRule = u.pendingRules[0];
-              return { ...u, activeRules: [...(u.activeRules ?? []), activatedRule], pendingRules: u.pendingRules.slice(1) };
+              return { ...u, activeRules: [...(u.activeRules ?? []), u.pendingRules[0]], pendingRules: u.pendingRules.slice(1) };
             }
             return u;
           });
 
           const newPair = drawWordPair([...usedWordPairs]);
-          const log = [...get().turnLog, { type: "correct", teamId: team.id, word: currentWordPair }];
+          const log     = [...get().turnLog, { type: "correct", teamId: team.id, word: currentWordPair }];
 
           set({
             teams: updatedTeams,
@@ -247,58 +255,50 @@ export const useGameStore = create(
             turnLog: log,
             winnerTeamId: isWinner ? team.id : null,
             phase: isWinner ? GAME_PHASES.WINNER : GAME_PHASES.GAMEPLAY,
-            confettiTrigger: get().confettiTrigger + 1,
+            // NOTE: no confettiTrigger here — UI calls burstConfetti() directly
           });
           _publish();
         },
 
         pressDing: (dingTeamIndex) => {
-          const { turnPhase } = get();
+          const { turnPhase, autoDing, dingCount } = get();
           if (turnPhase !== TURN_PHASES.DESCRIBING) return;
-          const now = Date.now();
+
+          const now     = Date.now();
           const elapsed = get().timeElapsedBeforePause + (now - get().turnStartTime) / 1000;
-          set({
-            dingTeamIndex,
-            timerPausedAt: now,
-            timeElapsedBeforePause: elapsed,
-            turnStartTime: null,
-            turnPhase: TURN_PHASES.DING_REVIEW,
-          });
+
+          if (autoDing) {
+            // ── Instant mode: skip review, immediately award the point ──
+            set({
+              dingTeamIndex: null,
+              timerPausedAt: now,
+              timeElapsedBeforePause: elapsed,
+              turnStartTime: null,
+              dingCount: dingCount + 1, // triggers sound on all devices
+            });
+            _applyDing(dingTeamIndex);
+          } else {
+            // ── Standard mode: pause for host review ──
+            set({
+              dingTeamIndex,
+              timerPausedAt: now,
+              timeElapsedBeforePause: elapsed,
+              turnStartTime: null,
+              turnPhase: TURN_PHASES.DING_REVIEW,
+              dingCount: dingCount + 1, // triggers sound on all devices
+            });
+          }
           _publish();
         },
 
         confirmDing: () => {
-          const { dingTeamIndex, teams, boardLength } = get();
+          const { dingTeamIndex } = get();
           if (dingTeamIndex === null) return;
-
-          const dingTeam = teams[dingTeamIndex];
-          const newPos   = Math.min(dingTeam.position + 1, boardLength);
-          const isWinner = newPos >= boardLength;
-
-          const updatedTeams = teams.map((t, i) =>
-            i === dingTeamIndex ? { ...t, position: newPos } : t
-          );
-
-          // Resume timer: reset start time based on remaining elapsed
-          const now = Date.now();
-          const newPair = drawWordPair(get().usedWordPairs);
-
-          set({
-            teams: updatedTeams,
-            dingTeamIndex: null,
-            timerPausedAt: null,
-            turnStartTime: isWinner ? null : now,
-            currentWordPair: isWinner ? get().currentWordPair : newPair,
-            usedWordPairs: isWinner ? get().usedWordPairs : [...get().usedWordPairs, newPair.key],
-            turnPhase: isWinner ? TURN_PHASES.IDLE : TURN_PHASES.DESCRIBING,
-            winnerTeamId: isWinner ? dingTeam.id : null,
-            phase: isWinner ? GAME_PHASES.WINNER : GAME_PHASES.GAMEPLAY,
-          });
+          _applyDing(dingTeamIndex);
           _publish();
         },
 
         rejectDing: () => {
-          // Resume timer from where it paused
           const now = Date.now();
           set({
             dingTeamIndex: null,
@@ -312,14 +312,9 @@ export const useGameStore = create(
         endTurn: () => {
           const { currentTeamIndex, teams } = get();
           const next = (currentTeamIndex + 1) % teams.length;
-          set({
-            currentTeamIndex: next,
-            ...resetTurnState(),
-          });
+          set({ currentTeamIndex: next, ...resetTurnState() });
           _publish();
         },
-
-        triggerConfetti: () => set((s) => ({ confettiTrigger: s.confettiTrigger + 1 })),
 
         resetGame: () => set({ ...initial }),
       };
@@ -332,6 +327,7 @@ export const useGameStore = create(
         numTeams: s.numTeams,
         boardLength: s.boardLength,
         timerSeconds: s.timerSeconds,
+        autoDing: s.autoDing,
         teams: s.teams,
         currentTeamIndex: s.currentTeamIndex,
         turnPhase: s.turnPhase,
@@ -347,8 +343,6 @@ export const useGameStore = create(
     }
   )
 );
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function resetTurnState() {
   return {

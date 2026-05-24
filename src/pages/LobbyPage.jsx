@@ -10,7 +10,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Gamepad2, KeyRound, Users, ArrowLeft, Hash, Clock, ChevronRight, Wifi, WifiOff } from "lucide-react";
+import { Gamepad2, KeyRound, Users, ArrowLeft, Hash, Clock, ChevronRight, Wifi, WifiOff, Zap, Bell } from "lucide-react";
 import { useGameStore, GAME_PHASES, DEFAULT_BOARD_LENGTH, DEFAULT_TIMER_SECONDS } from "../store/gameStore";
 import { useDevice } from "../context/DeviceContext";
 import { Button } from "../components/ui/Button";
@@ -39,8 +39,8 @@ function TogglePill({ options, value, onChange }) {
           onClick={() => onChange(opt.value)}
           className={`flex-1 py-3 rounded-xl font-bold text-sm border-2 transition-all ${
             value === opt.value
-              ? "bg-indigo-600 border-indigo-600 text-white shadow-sm"
-              : "bg-white border-indigo-100 text-indigo-400 hover:border-indigo-300"
+              ? "bg-sky-600 border-sky-600 text-white shadow-sm"
+              : "bg-white border-sky-100 text-sky-400 hover:border-sky-300"
           }`}
         >
           {opt.label}
@@ -57,6 +57,7 @@ export function LobbyPage() {
   const [numTeams, setNumTeams]     = useState(2);
   const [boardLength, setBoardLength] = useState(DEFAULT_BOARD_LENGTH);
   const [timerSeconds, setTimerSeconds] = useState(DEFAULT_TIMER_SECONDS);
+  const [autoDing, setAutoDing]     = useState(false);
   const [joinCode, setJoinCode]     = useState("");
   const [joinError, setJoinError]   = useState("");
 
@@ -66,7 +67,7 @@ export function LobbyPage() {
   const { claimTeam } = useDevice();
 
   const handleCreate = () => {
-    createRoom({ numTeams, boardLength, timerSeconds });
+    createRoom({ numTeams, boardLength, timerSeconds, autoDing });
     claimTeam(0, true); // host = team 0
   };
 
@@ -86,7 +87,7 @@ export function LobbyPage() {
       <div className="w-full max-w-lg">
         <button
           onClick={() => setPhase(GAME_PHASES.LANDING)}
-          className="flex items-center gap-1.5 text-indigo-400 hover:text-indigo-600 text-sm mb-6 transition-colors"
+          className="flex items-center gap-1.5 text-sky-400 hover:text-sky-600 text-sm mb-6 transition-colors"
         >
           <ArrowLeft size={16} /> Back
         </button>
@@ -94,7 +95,7 @@ export function LobbyPage() {
         <motion.div
           initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }}
           transition={{ type: "spring", stiffness: 280, damping: 24 }}
-          className="bg-white rounded-3xl border border-indigo-100 shadow-md p-7"
+          className="bg-white rounded-3xl border border-sky-100 shadow-md p-7"
         >
           {/* Mode badge */}
           <div className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold mb-5 ${
@@ -104,12 +105,12 @@ export function LobbyPage() {
             {isOnlineMode ? "Multiplayer — each team uses their own device" : "Local mode — one shared device"}
           </div>
 
-          <h1 className="font-display text-3xl text-indigo-950 mb-5">
+          <h1 className="font-display text-3xl text-sky-950 mb-5">
             {tab === "create" ? "New Game" : "Join Game"}
           </h1>
 
           {/* Tab switcher */}
-          <div className="flex gap-2 rounded-2xl bg-indigo-50 p-1.5 mb-6">
+          <div className="flex gap-2 rounded-2xl bg-sky-50 p-1.5 mb-6">
             {[
               { id: "create", label: "Create", icon: Gamepad2 },
               { id: "join",   label: "Join",   icon: KeyRound  },
@@ -119,8 +120,8 @@ export function LobbyPage() {
                 onClick={() => setTab(t.id)}
                 className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-bold text-sm transition-all ${
                   tab === t.id
-                    ? "bg-indigo-600 text-white shadow-sm"
-                    : "text-indigo-400 hover:text-indigo-600"
+                    ? "bg-sky-600 text-white shadow-sm"
+                    : "text-sky-400 hover:text-sky-600"
                 }`}
               >
                 <t.icon size={15} /> {t.label}
@@ -137,7 +138,7 @@ export function LobbyPage() {
               >
                 {/* Teams */}
                 <div>
-                  <label className="text-xs font-bold uppercase tracking-widest text-indigo-400 flex items-center gap-1.5 mb-2">
+                  <label className="text-xs font-bold uppercase tracking-widest text-sky-400 flex items-center gap-1.5 mb-2">
                     <Users size={12} /> Number of Teams
                   </label>
                   <TogglePill
@@ -149,7 +150,7 @@ export function LobbyPage() {
 
                 {/* Board */}
                 <div>
-                  <label className="text-xs font-bold uppercase tracking-widest text-indigo-400 mb-2 block">
+                  <label className="text-xs font-bold uppercase tracking-widest text-sky-400 mb-2 block">
                     Board Length
                   </label>
                   <TogglePill options={BOARD_PRESETS} value={boardLength} onChange={setBoardLength} />
@@ -157,17 +158,46 @@ export function LobbyPage() {
 
                 {/* Timer */}
                 <div>
-                  <label className="text-xs font-bold uppercase tracking-widest text-indigo-400 flex items-center gap-1.5 mb-2">
+                  <label className="text-xs font-bold uppercase tracking-widest text-sky-400 flex items-center gap-1.5 mb-2">
                     <Clock size={12} /> Turn Timer
                   </label>
                   <TogglePill options={TIMER_PRESETS} value={timerSeconds} onChange={setTimerSeconds} />
                 </div>
 
+                {/* Instant Ding toggle */}
+                <div>
+                  <div className="flex items-center justify-between rounded-2xl bg-sky-50 border border-sky-100 px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${autoDing ? "bg-red-100" : "bg-sky-100"}`}>
+                        {autoDing ? <Zap size={16} className="text-red-500" /> : <Bell size={16} className="text-sky-400" />}
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-sky-900">Instant Ding</p>
+                        <p className="text-xs text-sky-400">
+                          {autoDing ? "Ding scores automatically — no host confirmation" : "Host reviews each ding before scoring"}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setAutoDing((v) => !v)}
+                      className={`relative w-12 h-6 rounded-full transition-colors shrink-0 ${autoDing ? "bg-red-500" : "bg-sky-200"}`}
+                      aria-label="Toggle instant ding"
+                    >
+                      <motion.div
+                        layout
+                        transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                        className="absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-sm"
+                        style={{ left: autoDing ? "calc(100% - 1.375rem)" : "0.125rem" }}
+                      />
+                    </button>
+                  </div>
+                </div>
+
                 {/* Summary */}
-                <div className="grid grid-cols-3 gap-2 rounded-2xl bg-indigo-50 p-4 text-center text-sm text-indigo-500">
-                  <div><p className="font-display text-2xl text-indigo-900">{numTeams}</p><p>Teams</p></div>
-                  <div><p className="font-display text-2xl text-indigo-900">{boardLength}</p><p>Spaces</p></div>
-                  <div><p className="font-display text-2xl text-indigo-900">{timerSeconds}s</p><p>Timer</p></div>
+                <div className="grid grid-cols-3 gap-2 rounded-2xl bg-sky-50 p-4 text-center text-sm text-sky-500">
+                  <div><p className="font-display text-2xl text-sky-900">{numTeams}</p><p>Teams</p></div>
+                  <div><p className="font-display text-2xl text-sky-900">{boardLength}</p><p>Spaces</p></div>
+                  <div><p className="font-display text-2xl text-sky-900">{timerSeconds}s</p><p>Timer</p></div>
                 </div>
 
                 <Button size="lg" variant="primary" className="w-full" onClick={handleCreate} icon={ChevronRight}>
@@ -202,9 +232,9 @@ export function LobbyPage() {
                   Join Room
                 </Button>
 
-                <p className="text-center text-indigo-400 text-sm">
+                <p className="text-center text-sky-400 text-sm">
                   No code?{" "}
-                  <button onClick={() => setTab("create")} className="text-indigo-600 font-bold hover:underline">
+                  <button onClick={() => setTab("create")} className="text-sky-600 font-bold hover:underline">
                     Create a new game
                   </button>
                 </p>
