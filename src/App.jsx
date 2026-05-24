@@ -1,22 +1,18 @@
 /**
  * App.jsx — Root component.
  *
- * Routing is phase-based (not URL-based) since the game is a single-session
- * experience. The `phase` in Zustand determines which screen to render.
- *
- * Screens:
- *   landing    → LandingPage
- *   lobby      → LobbyPage
- *   team_setup → TeamSetupPage
- *   rule_draft → RuleDraftPage
- *   gameplay   → GameplayPage
- *   winner     → WinnerPage
+ * Provides:
+ *   • DeviceProvider   — persists per-device team identity
+ *   • useRoomSync      — subscribes to Firebase room (no-op in local mode)
+ *   • useConfetti      — global confetti hook
+ *   • Phase-based router
  */
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useGameStore, GAME_PHASES } from "./store/gameStore";
-// Note: App.css is intentionally empty — all styles use Tailwind + index.css
+import { DeviceProvider } from "./context/DeviceContext";
 import { useConfetti } from "./hooks/useConfetti";
+import { useRoomSync } from "./hooks/useRoomSync";
 
 import { LandingPage }   from "./pages/LandingPage";
 import { LobbyPage }     from "./pages/LobbyPage";
@@ -25,62 +21,44 @@ import { RuleDraftPage } from "./pages/RuleDraftPage";
 import { GameplayPage }  from "./pages/GameplayPage";
 import { WinnerPage }    from "./pages/WinnerPage";
 
-// Page transition variants
-const pageVariants = {
-  initial: { opacity: 0, y: 16 },
-  animate: { opacity: 1, y: 0 },
-  exit:    { opacity: 0, y: -16 },
+const tx = {
+  initial:    { opacity: 0, y: 12 },
+  animate:    { opacity: 1, y: 0  },
+  exit:       { opacity: 0, y: -12 },
+  transition: { duration: 0.22, ease: "easeInOut" },
 };
 
-const pageTransition = {
-  type: "tween",
-  ease: "easeInOut",
-  duration: 0.25,
-};
-
-function PageWrapper({ children }) {
+function Wrap({ children }) {
   return (
-    <motion.div
-      variants={pageVariants}
-      initial="initial"
-      animate="animate"
-      exit="exit"
-      transition={pageTransition}
-      className="w-full min-h-screen"
-    >
+    <motion.div {...tx} className="w-full min-h-screen">
       {children}
     </motion.div>
   );
 }
 
-export default function App() {
+function Inner() {
   const phase = useGameStore((s) => s.phase);
-
-  // Mount the global confetti hook
   useConfetti();
+  useRoomSync();   // listens to Firebase room, no-op in local mode
 
   return (
-    <div className="w-full min-h-screen bg-[#0f0a1e]">
+    <div className="w-full min-h-screen">
       <AnimatePresence mode="wait">
-        {phase === GAME_PHASES.LANDING && (
-          <PageWrapper key="landing"><LandingPage /></PageWrapper>
-        )}
-        {phase === GAME_PHASES.LOBBY && (
-          <PageWrapper key="lobby"><LobbyPage /></PageWrapper>
-        )}
-        {phase === GAME_PHASES.TEAM_SETUP && (
-          <PageWrapper key="team-setup"><TeamSetupPage /></PageWrapper>
-        )}
-        {phase === GAME_PHASES.RULE_DRAFT && (
-          <PageWrapper key="rule-draft"><RuleDraftPage /></PageWrapper>
-        )}
-        {phase === GAME_PHASES.GAMEPLAY && (
-          <PageWrapper key="gameplay"><GameplayPage /></PageWrapper>
-        )}
-        {phase === GAME_PHASES.WINNER && (
-          <PageWrapper key="winner"><WinnerPage /></PageWrapper>
-        )}
+        {phase === GAME_PHASES.LANDING    && <Wrap key="landing">   <LandingPage />   </Wrap>}
+        {phase === GAME_PHASES.LOBBY      && <Wrap key="lobby">     <LobbyPage />     </Wrap>}
+        {phase === GAME_PHASES.TEAM_SETUP && <Wrap key="team-setup"><TeamSetupPage /> </Wrap>}
+        {phase === GAME_PHASES.RULE_DRAFT && <Wrap key="rule-draft"><RuleDraftPage /> </Wrap>}
+        {phase === GAME_PHASES.GAMEPLAY   && <Wrap key="gameplay">  <GameplayPage />  </Wrap>}
+        {phase === GAME_PHASES.WINNER     && <Wrap key="winner">    <WinnerPage />    </Wrap>}
       </AnimatePresence>
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <DeviceProvider>
+      <Inner />
+    </DeviceProvider>
   );
 }

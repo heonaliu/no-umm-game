@@ -1,26 +1,24 @@
-/**
- * Badge — small pill label for rules, status indicators, etc.
- */
+/** Badge — small pill label for rules, status, etc. */
 
 import clsx from "clsx";
 
 const colors = {
-  violet:  "bg-violet-500/20 text-violet-300 border-violet-500/40",
-  pink:    "bg-pink-500/20 text-pink-300 border-pink-500/40",
-  cyan:    "bg-cyan-500/20 text-cyan-300 border-cyan-500/40",
-  amber:   "bg-amber-500/20 text-amber-300 border-amber-500/40",
-  green:   "bg-emerald-500/20 text-emerald-300 border-emerald-500/40",
-  red:     "bg-red-500/20 text-red-300 border-red-500/40",
-  white:   "bg-white/10 text-white/80 border-white/20",
-  yellow:  "bg-yellow-400/20 text-yellow-300 border-yellow-400/40",
+  indigo:   "bg-indigo-100 text-indigo-700 border-indigo-200",
+  violet:   "bg-violet-100 text-violet-700 border-violet-200",
+  amber:    "bg-amber-100  text-amber-700  border-amber-200",
+  emerald:  "bg-emerald-100 text-emerald-700 border-emerald-200",
+  red:      "bg-red-100 text-red-700 border-red-200",
+  cyan:     "bg-cyan-100 text-cyan-700 border-cyan-200",
+  pink:     "bg-pink-100 text-pink-700 border-pink-200",
+  gray:     "bg-gray-100 text-gray-600 border-gray-200",
 };
 
-export function Badge({ children, color = "white", className = "" }) {
+export function Badge({ children, color = "indigo", className = "" }) {
   return (
     <span
       className={clsx(
-        "inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold border",
-        colors[color] ?? colors.white,
+        "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold border",
+        colors[color] ?? colors.indigo,
         className
       )}
     >

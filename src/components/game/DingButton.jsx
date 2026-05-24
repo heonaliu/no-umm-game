@@ -1,26 +1,28 @@
 /**
- * DingButton — large red button for non-active teams to press when they
- * catch a violation. Includes a ripple animation and the team's name.
+ * DingButton — large button shown on NON-ACTIVE team devices.
+ * Each team has their own dedicated button.
  */
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Bell, Mic } from "lucide-react";
 import { useGameStore, TURN_PHASES } from "../../store/gameStore";
+import clsx from "clsx";
 
 export function DingButton({ teamIndex }) {
-  const team = useGameStore((s) => s.teams[teamIndex]);
+  const team             = useGameStore((s) => s.teams[teamIndex]);
   const currentTeamIndex = useGameStore((s) => s.currentTeamIndex);
-  const turnPhase = useGameStore((s) => s.turnPhase);
-  const pressDing = useGameStore((s) => s.pressDing);
-  const [ripple, setRipple] = useState(false);
+  const turnPhase        = useGameStore((s) => s.turnPhase);
+  const pressDing        = useGameStore((s) => s.pressDing);
+  const [rippling, setRippling] = useState(false);
 
-  const isActive = currentTeamIndex === teamIndex;
-  const canDing = !isActive && turnPhase === TURN_PHASES.DESCRIBING;
+  const isActiveTeam = currentTeamIndex === teamIndex;
+  const canDing      = !isActiveTeam && turnPhase === TURN_PHASES.DESCRIBING;
 
   const handleDing = () => {
     if (!canDing) return;
-    setRipple(true);
-    setTimeout(() => setRipple(false), 700);
+    setRippling(true);
+    setTimeout(() => setRippling(false), 700);
     pressDing(teamIndex);
   };
 
@@ -28,50 +30,59 @@ export function DingButton({ teamIndex }) {
     <motion.button
       onClick={handleDing}
       disabled={!canDing}
-      whileHover={canDing ? { scale: 1.04 } : {}}
-      whileTap={canDing ? { scale: 0.93 } : {}}
-      transition={{ type: "spring", stiffness: 400, damping: 15 }}
-      className={`
-        relative overflow-hidden rounded-2xl border-4 py-4 px-6 w-full
-        font-display font-bold text-xl text-white transition-all duration-200
-        select-none cursor-pointer
-        ${canDing
-          ? "bg-red-600 border-red-400 hover:bg-red-500 shadow-lg shadow-red-900/60 active:bg-red-700"
-          : isActive
-            ? "bg-violet-700/40 border-violet-500/40 opacity-80 cursor-default"
-            : "bg-white/5 border-white/10 opacity-40 cursor-not-allowed"
-        }
-      `}
+      whileHover={canDing ? { scale: 1.03 } : {}}
+      whileTap={canDing ? { scale: 0.94 } : {}}
+      transition={{ type: "spring", stiffness: 380, damping: 16 }}
+      className={clsx(
+        "relative overflow-hidden rounded-2xl border-2 w-full py-4 px-5 select-none transition-all",
+        "flex items-center gap-3",
+        canDing
+          ? "bg-red-600 border-red-500 text-white shadow-lg shadow-red-200 cursor-pointer"
+          : isActiveTeam
+            ? "bg-indigo-50 border-indigo-200 text-indigo-400 cursor-default"
+            : "bg-gray-50 border-gray-200 text-gray-300 cursor-not-allowed opacity-50"
+      )}
     >
-      {/* Ripple effect */}
+      {/* Ripple */}
       <AnimatePresence>
-        {ripple && (
+        {rippling && (
           <motion.span
             key="ripple"
-            initial={{ scale: 0, opacity: 0.8 }}
-            animate={{ scale: 4, opacity: 0 }}
+            initial={{ scale: 0, opacity: 0.6 }}
+            animate={{ scale: 5, opacity: 0 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.6 }}
-            className="absolute inset-0 m-auto w-16 h-16 rounded-full bg-white/40 pointer-events-none"
+            className="absolute inset-0 m-auto w-12 h-12 rounded-full bg-white pointer-events-none"
           />
         )}
       </AnimatePresence>
 
-      <div className="flex items-center justify-center gap-2 relative z-10">
-        <span className="text-3xl">{team?.pawn}</span>
-        <div className="text-left">
-          <div className="text-base leading-none text-white/60 font-body">
-            {isActive ? "ACTIVE TEAM" : "DING!"}
-          </div>
-          <div className="text-lg leading-tight" style={{ color: team?.color?.hex }}>
-            {team?.name}
-          </div>
-        </div>
-        {canDing && (
-          <span className="ml-auto text-4xl animate-bounce">🔔</span>
-        )}
-        {isActive && (
-          <span className="ml-auto text-2xl">🎤</span>
+      {/* Pawn */}
+      <span className="text-2xl shrink-0 relative z-10">{team?.pawn}</span>
+
+      {/* Labels */}
+      <div className="text-left flex-1 min-w-0 relative z-10">
+        <p className={clsx("text-xs font-bold uppercase tracking-widest", canDing ? "text-red-200" : "text-current opacity-70")}>
+          {isActiveTeam ? "Your Team Is Describing" : "Press to DING"}
+        </p>
+        <p className="font-display text-lg leading-tight truncate" style={canDing ? {} : { color: team?.color?.hex }}>
+          {team?.name}
+        </p>
+      </div>
+
+      {/* Icon */}
+      <div className="relative z-10 shrink-0">
+        {isActiveTeam ? (
+          <Mic size={24} className="text-indigo-400" />
+        ) : canDing ? (
+          <motion.div
+            animate={{ rotate: [-8, 8, -5, 5, 0] }}
+            transition={{ duration: 1.2, repeat: Infinity, repeatDelay: 1.5 }}
+          >
+            <Bell size={28} className="text-white fill-white/20" />
+          </motion.div>
+        ) : (
+          <Bell size={24} className="opacity-30" />
         )}
       </div>
     </motion.button>

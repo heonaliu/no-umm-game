@@ -1,29 +1,36 @@
-/**
- * Input — styled text input for forms.
- */
+/** Input — light-theme styled text input. */
 
 import clsx from "clsx";
 
-export function Input({ className = "", label, error, ...props }) {
+export function Input({ className = "", label, error, icon: Icon, ...props }) {
   return (
     <div className="flex flex-col gap-1.5 w-full">
       {label && (
-        <label className="text-sm font-bold text-white/70 uppercase tracking-widest">
+        <label className="text-xs font-bold uppercase tracking-widest text-indigo-500">
           {label}
         </label>
       )}
-      <input
-        className={clsx(
-          "w-full rounded-xl border-2 border-white/20 bg-white/10 px-4 py-3",
-          "text-white placeholder:text-white/30 font-body text-base",
-          "focus:outline-none focus:border-violet-400 focus:bg-white/15",
-          "transition-all duration-150",
-          error && "border-red-400 focus:border-red-400",
-          className
+      <div className="relative">
+        {Icon && (
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-indigo-300">
+            <Icon size={18} />
+          </span>
         )}
-        {...props}
-      />
-      {error && <span className="text-red-400 text-xs">{error}</span>}
+        <input
+          className={clsx(
+            "w-full rounded-xl border bg-white px-4 py-3",
+            "text-indigo-950 placeholder:text-indigo-300 font-body text-base",
+            "focus:outline-none focus:ring-2 transition-all duration-150",
+            error
+              ? "border-red-300 focus:ring-red-200"
+              : "border-indigo-200 focus:border-indigo-400 focus:ring-indigo-100",
+            Icon && "pl-10",
+            className
+          )}
+          {...props}
+        />
+      </div>
+      {error && <span className="text-red-500 text-xs flex items-center gap-1">{error}</span>}
     </div>
   );
 }

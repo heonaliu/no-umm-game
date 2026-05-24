@@ -1,21 +1,26 @@
 /**
- * LobbyPage — Create a new game OR join with a room code.
+ * LobbyPage — Create or Join a room.
  *
- * Create flow: choose # teams, board length, timer → generate room code
- * Join flow: enter room code (local sim — in real app would fetch server state)
+ * Create: pick teams / board / timer → generates room code → host claims team 0
+ * Join:   enter code → picks team slot → waits for game state from Firebase
+ *
+ * In local mode (no Firebase) the join tab still works but shows a note that
+ * all teams must use the same device.
  */
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Gamepad2, KeyRound, Users, ArrowLeft, Hash, Clock, ChevronRight, Wifi, WifiOff } from "lucide-react";
 import { useGameStore, GAME_PHASES, DEFAULT_BOARD_LENGTH, DEFAULT_TIMER_SECONDS } from "../store/gameStore";
+import { useDevice } from "../context/DeviceContext";
 import { Button } from "../components/ui/Button";
-import { Card } from "../components/ui/Card";
 import { Input } from "../components/ui/Input";
+import { isOnlineMode } from "../lib/firebase";
 
 const BOARD_PRESETS = [
-  { label: "Short",   value: 20, desc: "~20 min" },
-  { label: "Classic", value: 30, desc: "~35 min" },
-  { label: "Long",    value: 50, desc: "~60 min" },
+  { label: "Short",   value: 20, est: "~20 min" },
+  { label: "Classic", value: 30, est: "~35 min" },
+  { label: "Long",    value: 50, est: "~60 min" },
 ];
 
 const TIMER_PRESETS = [
@@ -25,66 +30,100 @@ const TIMER_PRESETS = [
   { label: "90s", value: 90 },
 ];
 
+function TogglePill({ options, value, onChange }) {
+  return (
+    <div className="flex gap-1.5">
+      {options.map((opt) => (
+        <button
+          key={opt.value}
+          onClick={() => onChange(opt.value)}
+          className={`flex-1 py-3 rounded-xl font-bold text-sm border-2 transition-all ${
+            value === opt.value
+              ? "bg-indigo-600 border-indigo-600 text-white shadow-sm"
+              : "bg-white border-indigo-100 text-indigo-400 hover:border-indigo-300"
+          }`}
+        >
+          {opt.label}
+          {opt.est && <span className="block text-[10px] opacity-60 font-normal">{opt.est}</span>}
+          {opt.desc && <span className="block text-[10px] opacity-60 font-normal">{opt.desc}</span>}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function LobbyPage() {
-  const [tab, setTab] = useState("create"); // "create" | "join"
-  const [numTeams, setNumTeams] = useState(2);
+  const [tab, setTab]               = useState("create");
+  const [numTeams, setNumTeams]     = useState(2);
   const [boardLength, setBoardLength] = useState(DEFAULT_BOARD_LENGTH);
   const [timerSeconds, setTimerSeconds] = useState(DEFAULT_TIMER_SECONDS);
-  const [joinCode, setJoinCode] = useState("");
-  const [joinError, setJoinError] = useState("");
+  const [joinCode, setJoinCode]     = useState("");
+  const [joinError, setJoinError]   = useState("");
 
   const createRoom = useGameStore((s) => s.createRoom);
-  const joinRoom = useGameStore((s) => s.joinRoom);
-  const setPhase = useGameStore((s) => s.setPhase);
+  const joinRoom   = useGameStore((s) => s.joinRoom);
+  const setPhase   = useGameStore((s) => s.setPhase);
+  const { claimTeam } = useDevice();
 
   const handleCreate = () => {
     createRoom({ numTeams, boardLength, timerSeconds });
+    claimTeam(0, true); // host = team 0
   };
 
   const handleJoin = () => {
-    if (joinCode.trim().length !== 4) {
-      setJoinError("Room codes are 4 characters (e.g. X7KP)");
+    const code = joinCode.trim().toUpperCase();
+    if (code.length !== 4) {
+      setJoinError("Room codes are exactly 4 characters (e.g. X7KP)");
       return;
     }
     setJoinError("");
-    joinRoom(joinCode.trim());
+    joinRoom(code);
+    // Team selection happens on the TeamSetupPage after state loads from Firebase
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="w-full max-w-lg">
-        {/* Back button */}
         <button
           onClick={() => setPhase(GAME_PHASES.LANDING)}
-          className="text-white/40 hover:text-white/80 text-sm mb-6 flex items-center gap-1 transition-colors"
+          className="flex items-center gap-1.5 text-indigo-400 hover:text-indigo-600 text-sm mb-6 transition-colors"
         >
-          ← Back
+          <ArrowLeft size={16} /> Back
         </button>
 
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ type: "spring", stiffness: 280, damping: 25 }}
+          initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }}
+          transition={{ type: "spring", stiffness: 280, damping: 24 }}
+          className="bg-white rounded-3xl border border-indigo-100 shadow-md p-7"
         >
-          <h1 className="font-display text-4xl text-white text-shadow mb-6 text-center">
-            {tab === "create" ? "🎮 New Game" : "🔑 Join Game"}
+          {/* Mode badge */}
+          <div className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold mb-5 ${
+            isOnlineMode ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
+          }`}>
+            {isOnlineMode ? <Wifi size={12} /> : <WifiOff size={12} />}
+            {isOnlineMode ? "Multiplayer — each team uses their own device" : "Local mode — one shared device"}
+          </div>
+
+          <h1 className="font-display text-3xl text-indigo-950 mb-5">
+            {tab === "create" ? "New Game" : "Join Game"}
           </h1>
 
           {/* Tab switcher */}
-          <div className="flex gap-2 rounded-2xl bg-white/5 p-1.5 mb-6">
-            {["create", "join"].map((t) => (
+          <div className="flex gap-2 rounded-2xl bg-indigo-50 p-1.5 mb-6">
+            {[
+              { id: "create", label: "Create", icon: Gamepad2 },
+              { id: "join",   label: "Join",   icon: KeyRound  },
+            ].map((t) => (
               <button
-                key={t}
-                onClick={() => setTab(t)}
-                className={`
-                  flex-1 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 capitalize
-                  ${tab === t
-                    ? "bg-violet-600 text-white shadow-lg"
-                    : "text-white/50 hover:text-white/80"
-                  }
-                `}
+                key={t.id}
+                onClick={() => setTab(t.id)}
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-bold text-sm transition-all ${
+                  tab === t.id
+                    ? "bg-indigo-600 text-white shadow-sm"
+                    : "text-indigo-400 hover:text-indigo-600"
+                }`}
               >
-                {t === "create" ? "🎮 Create" : "🔑 Join"}
+                <t.icon size={15} /> {t.label}
               </button>
             ))}
           </div>
@@ -93,141 +132,79 @@ export function LobbyPage() {
             {tab === "create" ? (
               <motion.div
                 key="create"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
+                initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 16 }}
                 className="space-y-5"
               >
-                {/* Number of teams */}
+                {/* Teams */}
                 <div>
-                  <label className="text-xs font-bold uppercase tracking-widest text-white/50 block mb-2">
-                    Number of Teams
+                  <label className="text-xs font-bold uppercase tracking-widest text-indigo-400 flex items-center gap-1.5 mb-2">
+                    <Users size={12} /> Number of Teams
                   </label>
-                  <div className="flex gap-2">
-                    {[2, 3, 4, 5, 6].map((n) => (
-                      <button
-                        key={n}
-                        onClick={() => setNumTeams(n)}
-                        className={`
-                          flex-1 py-3 rounded-xl font-display font-bold text-lg border-2 transition-all
-                          ${numTeams === n
-                            ? "bg-violet-600 border-violet-400 text-white"
-                            : "bg-white/5 border-white/15 text-white/60 hover:border-white/30"
-                          }
-                        `}
-                      >
-                        {n}
-                      </button>
-                    ))}
-                  </div>
+                  <TogglePill
+                    options={[2,3,4,5,6].map((n) => ({ label: n, value: n }))}
+                    value={numTeams}
+                    onChange={setNumTeams}
+                  />
                 </div>
 
-                {/* Board length */}
+                {/* Board */}
                 <div>
-                  <label className="text-xs font-bold uppercase tracking-widest text-white/50 block mb-2">
+                  <label className="text-xs font-bold uppercase tracking-widest text-indigo-400 mb-2 block">
                     Board Length
                   </label>
-                  <div className="flex gap-2">
-                    {BOARD_PRESETS.map((p) => (
-                      <button
-                        key={p.value}
-                        onClick={() => setBoardLength(p.value)}
-                        className={`
-                          flex-1 py-3 rounded-xl font-bold border-2 transition-all text-sm
-                          ${boardLength === p.value
-                            ? "bg-cyan-600 border-cyan-400 text-white"
-                            : "bg-white/5 border-white/15 text-white/60 hover:border-white/30"
-                          }
-                        `}
-                      >
-                        <div>{p.label}</div>
-                        <div className="text-xs opacity-70">{p.value} spaces</div>
-                        <div className="text-xs opacity-50">{p.desc}</div>
-                      </button>
-                    ))}
-                  </div>
+                  <TogglePill options={BOARD_PRESETS} value={boardLength} onChange={setBoardLength} />
                 </div>
 
                 {/* Timer */}
                 <div>
-                  <label className="text-xs font-bold uppercase tracking-widest text-white/50 block mb-2">
-                    Turn Timer
+                  <label className="text-xs font-bold uppercase tracking-widest text-indigo-400 flex items-center gap-1.5 mb-2">
+                    <Clock size={12} /> Turn Timer
                   </label>
-                  <div className="flex gap-2">
-                    {TIMER_PRESETS.map((p) => (
-                      <button
-                        key={p.value}
-                        onClick={() => setTimerSeconds(p.value)}
-                        className={`
-                          flex-1 py-3 rounded-xl font-display font-bold border-2 transition-all
-                          ${timerSeconds === p.value
-                            ? "bg-pink-600 border-pink-400 text-white"
-                            : "bg-white/5 border-white/15 text-white/60 hover:border-white/30"
-                          }
-                        `}
-                      >
-                        {p.label}
-                      </button>
-                    ))}
-                  </div>
+                  <TogglePill options={TIMER_PRESETS} value={timerSeconds} onChange={setTimerSeconds} />
                 </div>
 
                 {/* Summary */}
-                <div className="rounded-2xl bg-white/5 border border-white/10 p-4 text-sm text-white/60 grid grid-cols-3 gap-2 text-center">
-                  <div>
-                    <div className="text-2xl font-display text-white">{numTeams}</div>
-                    <div>Teams</div>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-display text-white">{boardLength}</div>
-                    <div>Spaces</div>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-display text-white">{timerSeconds}s</div>
-                    <div>Per Turn</div>
-                  </div>
+                <div className="grid grid-cols-3 gap-2 rounded-2xl bg-indigo-50 p-4 text-center text-sm text-indigo-500">
+                  <div><p className="font-display text-2xl text-indigo-900">{numTeams}</p><p>Teams</p></div>
+                  <div><p className="font-display text-2xl text-indigo-900">{boardLength}</p><p>Spaces</p></div>
+                  <div><p className="font-display text-2xl text-indigo-900">{timerSeconds}s</p><p>Timer</p></div>
                 </div>
 
-                <Button size="lg" variant="primary" className="w-full" onClick={handleCreate}>
-                  🚀 Create Room
+                <Button size="lg" variant="primary" className="w-full" onClick={handleCreate} icon={ChevronRight}>
+                  Create Room
                 </Button>
               </motion.div>
             ) : (
               <motion.div
                 key="join"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
+                initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }}
                 className="space-y-4"
               >
-                <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-amber-300 text-sm">
-                  <p className="font-bold mb-1">📱 Local Play Mode</p>
-                  <p className="text-amber-300/70">
-                    This is a local-play game — everyone gathers around one device (or a shared screen).
-                    Room codes are for identifying sessions when you navigate back.
-                  </p>
-                </div>
+                {!isOnlineMode && (
+                  <div className="rounded-2xl bg-amber-50 border border-amber-200 p-4 text-amber-700 text-sm">
+                    <p className="font-bold mb-1">Local mode</p>
+                    <p className="text-amber-600/80">Firebase isn't configured, so all teams share this device. Enter any 4-character code to restore a session.</p>
+                  </div>
+                )}
 
                 <Input
                   label="Room Code"
-                  placeholder="Enter 4-letter code (e.g. X7KP)"
+                  placeholder="e.g. X7KP"
                   value={joinCode}
                   onChange={(e) => setJoinCode(e.target.value.toUpperCase().slice(0, 4))}
                   error={joinError}
+                  icon={Hash}
                   className="text-center text-2xl font-display tracking-[0.3em]"
                   maxLength={4}
                 />
 
-                <Button size="lg" variant="primary" className="w-full" onClick={handleJoin}>
-                  🔑 Join Room
+                <Button size="lg" variant="primary" className="w-full" onClick={handleJoin} icon={KeyRound}>
+                  Join Room
                 </Button>
 
-                <p className="text-center text-white/30 text-sm">
-                  Don't have a code?{" "}
-                  <button
-                    onClick={() => setTab("create")}
-                    className="text-violet-400 hover:text-violet-300 underline"
-                  >
+                <p className="text-center text-indigo-400 text-sm">
+                  No code?{" "}
+                  <button onClick={() => setTab("create")} className="text-indigo-600 font-bold hover:underline">
                     Create a new game
                   </button>
                 </p>

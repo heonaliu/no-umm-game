@@ -1,85 +1,69 @@
 /**
- * CountdownTimer — circular SVG timer with color transitions.
- * Green → Yellow → Red as time runs low.
+ * CountdownTimer — SVG ring timer driven by useGameTimer().
+ * Works identically on every device in the room (timestamp-based).
  */
 
 import { useMemo } from "react";
 import { motion } from "framer-motion";
+import { useGameTimer } from "../../hooks/useGameTimer";
 import { useGameStore } from "../../store/gameStore";
 import clsx from "clsx";
 
-const RADIUS = 44;
-const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
-
 export function CountdownTimer({ large = false }) {
-  const timerRemaining = useGameStore((s) => s.timerRemaining);
+  const remaining    = useGameTimer();
   const timerSeconds = useGameStore((s) => s.timerSeconds);
-  const timerActive = useGameStore((s) => s.timerActive);
 
-  const progress = timerSeconds > 0 ? timerRemaining / timerSeconds : 0;
-  const dashOffset = CIRCUMFERENCE * (1 - progress);
+  const progress  = timerSeconds > 0 ? remaining / timerSeconds : 0;
+  const isUrgent  = progress <= 0.25;
+  const isWarning = progress <= 0.5 && !isUrgent;
 
-  // Color based on time remaining
-  const color = useMemo(() => {
-    if (progress > 0.5) return "#10b981"; // green
-    if (progress > 0.25) return "#f59e0b"; // yellow
-    return "#ef4444"; // red
+  const size = large ? 140 : 96;
+  const cx   = size / 2;
+  const r    = cx - 8;
+  const circ = 2 * Math.PI * r;
+  const sw   = large ? 10 : 7;
+
+  const strokeColor = useMemo(() => {
+    if (progress > 0.5) return "#059669";   // emerald
+    if (progress > 0.25) return "#d97706";  // amber
+    return "#dc2626";                        // red
   }, [progress]);
 
-  const isUrgent = progress <= 0.25;
-  const size = large ? 140 : 100;
-  const cx = size / 2;
-  const r = (size / 2) - 8;
-  const circ = 2 * Math.PI * r;
-  const offset = circ * (1 - progress);
-
   return (
-    <div className={clsx("relative inline-flex items-center justify-center", large ? "w-36 h-36" : "w-24 h-24")}>
+    <div className={clsx("relative inline-flex items-center justify-center shrink-0", large ? "w-36 h-36" : "w-24 h-24")}>
       <svg
         width={size}
         height={size}
-        className={clsx("-rotate-90", isUrgent && timerActive && "animate-pulse")}
+        className={clsx("-rotate-90", isUrgent && "animate-pulse")}
       >
         {/* Track */}
-        <circle
-          cx={cx}
-          cy={cx}
-          r={r}
-          fill="none"
-          stroke="rgba(255,255,255,0.1)"
-          strokeWidth={large ? 10 : 8}
-        />
-        {/* Progress arc */}
+        <circle cx={cx} cy={cx} r={r} fill="none" stroke="#e0e7ff" strokeWidth={sw} />
+        {/* Arc */}
         <motion.circle
-          cx={cx}
-          cy={cx}
-          r={r}
+          cx={cx} cy={cx} r={r}
           fill="none"
-          stroke={color}
-          strokeWidth={large ? 10 : 8}
+          stroke={strokeColor}
+          strokeWidth={sw}
           strokeLinecap="round"
           strokeDasharray={circ}
-          animate={{ strokeDashoffset: offset }}
+          animate={{ strokeDashoffset: circ * (1 - progress) }}
           transition={{ duration: 0.9, ease: "linear" }}
-          style={{
-            filter: `drop-shadow(0 0 ${large ? 10 : 6}px ${color})`,
-          }}
+          style={{ filter: `drop-shadow(0 0 ${large ? 8 : 5}px ${strokeColor}60)` }}
         />
       </svg>
 
-      {/* Center number */}
       <div className="absolute inset-0 flex items-center justify-center">
         <motion.span
-          key={timerRemaining}
-          initial={{ scale: 1.3, opacity: 0.7 }}
+          key={remaining}
+          initial={{ scale: 1.2, opacity: 0.6 }}
           animate={{ scale: 1, opacity: 1 }}
           className={clsx(
             "font-display font-bold leading-none",
             large ? "text-4xl" : "text-2xl",
-            isUrgent ? "text-red-400" : "text-white"
+            isUrgent ? "text-red-600" : isWarning ? "text-amber-600" : "text-indigo-700"
           )}
         >
-          {timerRemaining}
+          {remaining}
         </motion.span>
       </div>
     </div>
