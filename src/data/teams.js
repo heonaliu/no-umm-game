@@ -12,8 +12,8 @@ export const TEAM_COLORS = [
 
 export const TEAM_PAWNS = [
   "🦄", "🐉", "🦊", "🐸", "🐙", "🦁", "🐨", "🦋",
-  "🦖", "🐳", "🐺", "🦝", "🐻", "🦑", "🐬", "🦅",
-];
+  "🦖", "🐳", "🐻", "🦑", "🐬", "🦉", "🐥", "🐹", "🐼",
+  "🐠", "🪼", "🦭"];
 
 /**
  * Generate a default team config for n teams

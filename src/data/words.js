@@ -11,13 +11,14 @@ export const PILE_A = [
   "Twisted", "Urgent", "Vibrant", "Wiggly", "Zesty",
   "Bored", "Cheerful", "Dizzy", "Electric", "Fancy",
   "Greasy", "Haunted", "Itchy", "Jolly", "Knobby",
-  "Lumpy", "Mysterious", "Noisy", "Oblong", "Prickly",
+  "Lumpy", "Mysterious", "Stupid", "Noisy", "Oblong", "Prickly",
   "Restless", "Salty", "Trembling", "Undercooked", "Velvety",
-  "Wacky", "Xenial", "Yawning", "Zealous", "Adorable",
+  "Wacky", "Sloppy", "Yawning", "Zealous", "Adorable",
   "Bitter", "Chubby", "Damp", "Enormous", "Floppy",
   "Gloomy", "Hollow", "Icy", "Jumbled", "Knitted",
   "Lopsided", "Muddy", "Neon", "Oily", "Puffy",
-  "Ragged", "Shiny", "Tangled", "Unruly", "Vapid",
+  "Ragged", "Shiny", "Tangled", "Unruly", "Vapid", "Fuzzy",
+  "Ugly", "Haunted", "Incredible", "Jittery", "Kooky", "Luminous",
 ];
 
 export const PILE_B = [
@@ -29,13 +30,14 @@ export const PILE_B = [
   "Tugboat", "Umbrella", "Viking", "Walrus", "Xylophone",
   "Yoyo", "Zipper", "Avocado", "Blizzard", "Cactus",
   "Doughnut", "Elevator", "Fishbowl", "Glitter", "Hotdog",
-  "Iceberg", "Jellybean", "Keyboard", "Lighthouse", "Marshmallow",
+  "Iceberg", "Jellybean", "Brain", "Keyboard", "Lighthouse", "Marshmallow",
   "Narwhal", "Observatory", "Pancake", "Quarry", "Rhinoceros",
   "Saxophone", "Toaster", "Unicorn", "Vortex", "Waffles",
   "Yo-yo", "Zeppelin", "Asteroid", "Bathtub", "Compass",
   "Dungeon", "Eggplant", "Fortress", "Gondola", "Hurricane",
   "Imaginary", "Jackhammer", "Ketchup", "Labyrinth", "Mongoose",
   "Nebula", "Omelet", "Porcupine", "Quicksand", "Raft",
+  "Underwear", "Volleyball", "Witch", "X-ray", "Yacht", "Zucchini",
 ];
 
 /**

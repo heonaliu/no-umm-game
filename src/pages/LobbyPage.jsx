@@ -67,11 +67,11 @@ export function LobbyPage() {
   const createRoom = useGameStore((s) => s.createRoom);
   const joinRoom   = useGameStore((s) => s.joinRoom);
   const setPhase   = useGameStore((s) => s.setPhase);
-  const { claimTeam } = useDevice();
+  const { claimTeam, deviceId } = useDevice();
 
   const handleCreate = async () => {
     setIsCreating(true);
-    await createRoom({ numTeams, boardLength, timerSeconds, autoDing });
+    await createRoom({ numTeams, boardLength, timerSeconds, autoDing, hostDeviceId: deviceId });
     claimTeam(0, true); // host = team 0
     // setIsCreating(false) not needed — component unmounts on phase change
   };

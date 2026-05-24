@@ -3,13 +3,14 @@
  *
  * In ONLINE mode: after joining, each device also picks WHICH team they
  * represent via the "My Team" selector at the top.
+ * teamClaims (synced via Firebase) prevents two devices claiming the same slot.
  *
  * In LOCAL mode: no team claiming needed (everyone shares one device).
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Pencil, Copy, Check, ArrowLeft, ChevronRight } from "lucide-react";
+import { Pencil, Copy, Check, ArrowLeft, ChevronRight, Lock, Users } from "lucide-react";
 import { useGameStore, GAME_PHASES } from "../store/gameStore";
 import { useDevice } from "../context/DeviceContext";
 import { TEAM_COLORS, TEAM_PAWNS } from "../data/teams";
@@ -106,12 +107,29 @@ function TeamEditor({ team, index }) {
 }
 
 export function TeamSetupPage() {
-  const teams       = useGameStore((s) => s.teams);
-  const roomCode    = useGameStore((s) => s.roomCode);
-  const setPhase    = useGameStore((s) => s.setPhase);
-  const dealRuleCards = useGameStore((s) => s.dealRuleCards);
-  const { myTeamIndex, isHost, claimTeam } = useDevice();
+  const teams           = useGameStore((s) => s.teams);
+  const numTeams        = useGameStore((s) => s.numTeams);
+  const roomCode        = useGameStore((s) => s.roomCode);
+  const teamClaims      = useGameStore((s) => s.teamClaims ?? {});
+  const setPhase        = useGameStore((s) => s.setPhase);
+  const dealRuleCards   = useGameStore((s) => s.dealRuleCards);
+  const claimTeamSlot   = useGameStore((s) => s.claimTeamSlot);
+  const releaseTeamSlot = useGameStore((s) => s.releaseTeamSlot);
+
+  const { deviceId, myTeamIndex, isHost, claimTeam } = useDevice();
   const [copied, setCopied] = useState(false);
+
+  // How many slots are claimed (in online mode every slot must have a device)
+  const claimedCount   = Object.keys(teamClaims).length;
+  const allSlotsFilled = !isOnlineMode || claimedCount >= numTeams;
+
+  // Re-establish this device's claim in Firebase whenever we land here.
+  // Handles page refresh and "Play Again" (which resets teamClaims to {}).
+  useEffect(() => {
+    if (!isOnlineMode || !deviceId || myTeamIndex === null) return;
+    claimTeamSlot(myTeamIndex, deviceId);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deviceId]);
 
   const copyCode = () => {
     navigator.clipboard?.writeText(roomCode ?? "");
@@ -119,9 +137,19 @@ export function TeamSetupPage() {
     setTimeout(() => setCopied(false), 1800);
   };
 
-  const handleClaim = (idx) => claimTeam(idx, isHost);
+  const handleToggleClaim = (idx) => {
+    if (myTeamIndex === idx) {
+      // Tap own slot → deselect
+      claimTeam(null, isHost);
+      releaseTeamSlot(deviceId);
+    } else {
+      // Tap available slot → claim (releases old slot automatically in claimTeamSlot)
+      claimTeam(idx, isHost);
+      claimTeamSlot(idx, deviceId);
+    }
+  };
 
-  // If joining, must claim a team first (online mode only)
+  // Must claim a team before proceeding (online joiners only)
   const needsTeamClaim = isOnlineMode && myTeamIndex === null && !isHost;
 
   return (
@@ -168,28 +196,75 @@ export function TeamSetupPage() {
               I am representing…
             </p>
             <div className="flex gap-2 flex-wrap">
-              {teams.map((team, i) => (
-                <button
-                  key={team.id}
-                  onClick={() => handleClaim(i)}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-xl border-2 font-bold text-sm transition-all ${
-                    myTeamIndex === i
-                      ? "border-sky-500 bg-sky-100 text-sky-800"
-                      : "border-sky-100 bg-white text-sky-500 hover:border-sky-300"
-                  }`}
-                  style={myTeamIndex === i ? { borderColor: team.color?.hex } : {}}
-                >
-                  <span>{team.pawn}</span>
-                  <span style={{ color: myTeamIndex === i ? team.color?.hex : undefined }}>
-                    {team.name}
-                  </span>
-                  {myTeamIndex === i && <Check size={14} className="text-sky-600" />}
-                </button>
-              ))}
+              {teams.map((team, i) => {
+                const claimedBy = teamClaims[String(i)];
+                const isMine    = myTeamIndex === i;
+                const isTaken   = claimedBy && claimedBy !== deviceId;
+
+                return (
+                  <button
+                    key={team.id}
+                    onClick={() => !isTaken && handleToggleClaim(i)}
+                    disabled={isTaken}
+                    className={`
+                      flex items-center gap-2 px-3 py-2 rounded-xl border-2 font-bold text-sm
+                      transition-all select-none
+                      ${isMine
+                        ? "bg-sky-100 text-sky-800"
+                        : isTaken
+                          ? "bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed opacity-60"
+                          : "border-sky-100 bg-white text-sky-500 hover:border-sky-300 cursor-pointer"
+                      }
+                    `}
+                    style={isMine ? { borderColor: team.color?.hex } : {}}
+                  >
+                    <span>{team.pawn}</span>
+                    <span style={{ color: isMine ? team.color?.hex : undefined }}>
+                      {team.name}
+                    </span>
+                    {isMine   && <Check size={14} className="text-sky-600 shrink-0" />}
+                    {isTaken  && <Lock  size={12} className="text-gray-400 shrink-0" />}
+                  </button>
+                );
+              })}
             </div>
+
             {needsTeamClaim && (
-              <p className="text-xs text-amber-600 mt-2">Please select which team you are to continue</p>
+              <p className="text-xs text-amber-600 mt-2 font-medium">
+                ↑ Select your team to continue
+              </p>
             )}
+
+            {/* Live claim status */}
+            <AnimatePresence>
+              {Object.keys(teamClaims).length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="mt-3 pt-3 border-t border-sky-200 flex flex-wrap gap-2"
+                >
+                  {teams.map((team, i) => {
+                    const claimedBy = teamClaims[String(i)];
+                    if (!claimedBy) return null;
+                    const isMe = claimedBy === deviceId;
+                    return (
+                      <span
+                        key={team.id}
+                        className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-bold ${
+                          isMe
+                            ? "bg-sky-100 text-sky-700"
+                            : "bg-gray-100 text-gray-500"
+                        }`}
+                      >
+                        {team.pawn} {team.name}
+                        <span className="font-normal opacity-70">{isMe ? "— you" : "— joined"}</span>
+                      </span>
+                    );
+                  })}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
         )}
 
@@ -228,12 +303,29 @@ export function TeamSetupPage() {
           </div>
         )}
 
-        {/* Bottom CTA — only host proceeds */}
+        {/* Bottom CTA — only host proceeds, gated on every slot being claimed */}
         {isHost && (
           <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-sky-50 via-sky-50/90 to-transparent">
-            <div className="max-w-2xl mx-auto">
-              <Button size="lg" variant="primary" className="w-full" onClick={dealRuleCards} icon={ChevronRight}>
-                Next: Rule Drafting
+            <div className="max-w-2xl mx-auto space-y-2">
+              <AnimatePresence>
+                {isOnlineMode && !allSlotsFilled && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 6 }}
+                    className="flex items-center justify-center gap-2 text-sky-500 text-sm font-medium"
+                  >
+                    <Users size={15} />
+                    Waiting for all teams to join —{" "}
+                    <span className="font-bold text-sky-700">{claimedCount} / {numTeams}</span> ready
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              <Button
+                size="lg" variant="primary" className="w-full"
+                disabled={!allSlotsFilled}
+                onClick={dealRuleCards}
+                icon={ChevronRight}
+              >
+                {allSlotsFilled ? "Next: Rule Drafting" : `Waiting for teams… (${claimedCount}/${numTeams})`}
               </Button>
             </div>
           </div>

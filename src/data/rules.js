@@ -170,6 +170,34 @@ export const ALL_RULES = [
     emoji: "🔢",
     difficulty: "medium",
   },
+  {
+    id: "repeat-twice",
+    title: "Repeat Twice",
+    description: "Must repeat each word they say exactly twice",
+    emoji: "🔁",
+    difficulty: "medium",
+  },
+  {
+    id: "delayed-echo",
+    title: "Delayed Echo",
+    description: "Must repeat the last 2 words the guessers said before your next sentence",
+    emoji: "🗣️",
+    difficulty: "hard",
+  },
+  {
+    id: "alternate-volume",
+    title: "Alternate Volume",
+    description: "Must speak in a different volume for every sentence (e.g. loud, quiet, medium, etc.)",
+    emoji: "🔊",
+    difficulty: "easy",
+  },
+  {
+    id: "inspirational",
+    title: "Inspirational",
+    description: "Must speak in an inspirational tone",
+    emoji: "💪",
+    difficulty: "easy",
+  },
 ];
 
 /**

@@ -46,6 +46,7 @@ const SYNC_FIELDS = [
   "currentWordPair", "usedWordPairs",
   "dingTeamIndex", "dingCount", "activeRules", "turnLog",
   "winnerTeamId", "ruleDraftComplete",
+  "teamClaims",   // { [teamIndex]: deviceId } — prevents two devices claiming one slot
 ];
 
 // ─── Initial state ────────────────────────────────────────────────────────────
@@ -76,6 +77,7 @@ const initial = {
   activeRules:     [],
   turnLog:         [],
   winnerTeamId:    null,
+  teamClaims:      {},   // ← { [teamIndex]: deviceId } synced to Firebase
 };
 
 // ─── Store ────────────────────────────────────────────────────────────────────
@@ -125,12 +127,14 @@ export const useGameStore = create(
 
         // ── Lobby ──────────────────────────────────────────────────────────
 
-        createRoom: async ({ numTeams, boardLength, timerSeconds, autoDing = false }) => {
-          const roomCode = await generateUniqueRoomCode();
-          const teams    = generateDefaultTeams(numTeams);
+        createRoom: async ({ numTeams, boardLength, timerSeconds, autoDing = false, hostDeviceId = null }) => {
+          const roomCode   = await generateUniqueRoomCode();
+          const teams      = generateDefaultTeams(numTeams);
+          // Host always occupies slot 0
+          const teamClaims = hostDeviceId ? { "0": hostDeviceId } : {};
           set({
             roomCode, numTeams, boardLength, timerSeconds, autoDing,
-            teams,
+            teams, teamClaims,
             phase: GAME_PHASES.TEAM_SETUP,
             ...resetTurnState(),
           });
@@ -140,6 +144,37 @@ export const useGameStore = create(
 
         joinRoom: (code) => {
           set({ roomCode: code.toUpperCase(), phase: GAME_PHASES.TEAM_SETUP });
+        },
+
+        /**
+         * Claim a team slot for a device.
+         * Automatically releases any other slot the same device previously held.
+         * Passing teamIndex = null just releases without claiming anything new.
+         */
+        claimTeamSlot: (teamIndex, deviceId) => {
+          if (!deviceId) return;
+          const claims = { ...(get().teamClaims ?? {}) };
+          // Release any slot this device already holds
+          for (const key of Object.keys(claims)) {
+            if (claims[key] === deviceId) delete claims[key];
+          }
+          // Claim the new slot
+          if (teamIndex !== null && teamIndex !== undefined) {
+            claims[String(teamIndex)] = deviceId;
+          }
+          set({ teamClaims: claims });
+          _publish();
+        },
+
+        /** Remove a device's claim entirely (e.g. on game reset). */
+        releaseTeamSlot: (deviceId) => {
+          if (!deviceId) return;
+          const claims = { ...(get().teamClaims ?? {}) };
+          for (const key of Object.keys(claims)) {
+            if (claims[key] === deviceId) delete claims[key];
+          }
+          set({ teamClaims: claims });
+          _publish();
         },
 
         // ── Remote sync ────────────────────────────────────────────────────

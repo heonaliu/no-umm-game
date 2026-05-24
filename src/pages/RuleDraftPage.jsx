@@ -6,8 +6,8 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Eye, ChevronRight, Check, Layers, Copy } from "lucide-react";
-import { useGameStore } from "../store/gameStore";
+import { Eye, ChevronRight, Check, Layers, Copy, XCircle } from "lucide-react";
+import { useGameStore, GAME_PHASES } from "../store/gameStore";
 import { useDevice } from "../context/DeviceContext";
 import { RuleCard } from "../components/game/RuleCard";
 import { Button } from "../components/ui/Button";
@@ -18,7 +18,11 @@ export function RuleDraftPage() {
   const roomCode        = useGameStore((s) => s.roomCode);
   const toggleDraftCard = useGameStore((s) => s.toggleDraftCard);
   const finalizeDraft   = useGameStore((s) => s.finalizeDraft);
-  const { myTeamIndex, isHost } = useDevice();
+  const resetGame       = useGameStore((s) => s.resetGame);
+  const { myTeamIndex, isHost, clearDevice } = useDevice();
+
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const handleCancel = () => { resetGame(); clearDevice(); };
 
   const [copied, setCopied] = useState(false);
   const copyCode = () => {
@@ -50,6 +54,61 @@ export function RuleDraftPage() {
   return (
     <div className="min-h-screen p-4 pb-28">
       <div className="max-w-2xl mx-auto pt-6">
+
+        {/* Cancel button */}
+        <button
+          onClick={() => setShowCancelConfirm(true)}
+          className="flex items-center gap-1.5 text-sky-400 hover:text-red-500 text-sm mb-5 transition-colors"
+        >
+          <XCircle size={16} /> Cancel Game
+        </button>
+
+        {/* Cancel confirmation modal */}
+        <AnimatePresence>
+          {showCancelConfirm && (
+            <>
+              <motion.div
+                key="bd"
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-sky-950/40 backdrop-blur-sm z-50"
+                onClick={() => setShowCancelConfirm(false)}
+              />
+              <motion.div
+                key="modal"
+                initial={{ opacity: 0, scale: 0.85, y: 32 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.85, y: 32 }}
+                transition={{ type: "spring", stiffness: 400, damping: 26 }}
+                className="fixed inset-0 z-50 flex items-center justify-center p-6 pointer-events-none"
+              >
+                <div className="pointer-events-auto w-full max-w-sm rounded-3xl bg-white border-2 border-red-200 shadow-2xl shadow-red-50 p-7 text-center">
+                  <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-red-100 mb-4">
+                    <XCircle size={28} className="text-red-500" />
+                  </div>
+                  <h2 className="font-display text-2xl text-sky-950 mb-2">Cancel game?</h2>
+                  <p className="text-sky-500 text-sm mb-6">
+                    This will end the session for everyone and return to the home screen. Any progress will be lost.
+                  </p>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setShowCancelConfirm(false)}
+                      className="flex-1 py-3 rounded-2xl border-2 border-sky-200 text-sky-600 font-bold text-sm hover:bg-sky-50 transition-colors"
+                    >
+                      Keep Playing
+                    </button>
+                    <button
+                      onClick={handleCancel}
+                      className="flex-1 py-3 rounded-2xl bg-red-500 hover:bg-red-600 text-white font-bold text-sm transition-colors"
+                    >
+                      Yes, Cancel
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
+
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }}
